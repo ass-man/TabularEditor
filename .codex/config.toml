@@ -1,0 +1,5 @@
+# Minimal local agent configuration for this repository.
+# Keep delegation shallow so feature context stays easy to review.
+
+[agents]
+max_depth = 1
