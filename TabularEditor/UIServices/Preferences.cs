@@ -124,6 +124,7 @@ namespace TabularEditor.UIServices
                 };
 
         public List<ColumnPreferences> View_ColumnPreferences = new List<ColumnPreferences>();
+        public Dictionary<string, string> Plugin_ModelTreeBackColorByModel = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         #endregion
 
         #region Serialization functionality

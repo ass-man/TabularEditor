@@ -307,6 +307,13 @@
     <Compile Include="UI\Actions\ITextBox.cs" />
     <Compile Include="UI\Actions\ModelAction.cs" />
     <Compile Include="UI\Actions\ModelActionManager.cs" />
+    <Compile Include="Plugins\Infrastructure\IRuntimeWindowPlugin.cs" />
+    <Compile Include="Plugins\Infrastructure\PluginCatalog.cs" />
+    <Compile Include="Plugins\Infrastructure\PluginDescriptor.cs" />
+    <Compile Include="Plugins\Infrastructure\PluginHostContext.cs" />
+    <Compile Include="Plugins\Infrastructure\PluginLoader.cs" />
+    <Compile Include="Plugins\Infrastructure\PluginRuntimeManager.cs" />
+    <Compile Include="Plugins\ModelTreeColor\ModelTreeColorPlugin.cs" />
     <Compile Include="TextServices\ScriptParser.cs" />
     <Compile Include="UI\Actions\TextboxAction.cs">
       <SubType>Component</SubType>
@@ -772,6 +779,12 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="tabulareditor.pbitool.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Plugins\ModelJsonViewer\ModelJsonViewerPlugin.csx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Plugins\plugins.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="TreeViewAdv\Tree\ClassDiagram.cd" />

@@ -19,6 +19,7 @@ namespace TabularEditor
     public partial class FormMain : Form
     {
         public UIController UI;
+        private ToolStripMenuItem pluginsToolStripMenuItem;
 
         private MacroJson CurrentMacro;
 
@@ -29,6 +30,7 @@ namespace TabularEditor
             Singleton = this;
             Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en-US");
             InitializeComponent();
+            SetupPluginsMenu();
 
             dlgOpenFile.Filter = "All supported files|*.bim;database.json;model.tmd;model.tmdl;database.tmdl;*.pbit;*.pbip|Tabular Model Files|*.bim;database.json;model.tmd;model.tmdl;database.tmdl|Power BI Files|*.pbit;*.pbip|All files|*.*";
 
@@ -96,6 +98,20 @@ Selected.Hierarchies.ForEach(item => item.TranslatedDisplayFolders.SetAll(item.D
             });
         }
 
+        private void SetupPluginsMenu()
+        {
+            pluginsToolStripMenuItem = new ToolStripMenuItem("&Plugins")
+            {
+                Name = "pluginsToolStripMenuItem"
+            };
+
+            var modelIndex = menuStrip1.Items.IndexOf(modelToolStripMenuItem);
+            if (modelIndex >= 0)
+                menuStrip1.Items.Insert(modelIndex + 1, pluginsToolStripMenuItem);
+            else
+                menuStrip1.Items.Add(pluginsToolStripMenuItem);
+        }
+
         private void PopulateMacrosDropDown()
         {
             macroToolStripMenuItem.DropDownItems.Clear();
@@ -149,6 +165,7 @@ Selected.Hierarchies.ForEach(item => item.TranslatedDisplayFolders.SetAll(item.D
                 OpenBimDialog = dlgOpenFile,
                 CurrentMeasureLabel = lblCurrentMeasure,
                 ModelMenu = modelToolStripMenuItem,
+                PluginsMenu = pluginsToolStripMenuItem,
                 PerspectiveSelector = cmbPerspective,
                 TranslationSelector = cmbTranslation,
                 ToolsMenu = toolsToolStripMenuItem,

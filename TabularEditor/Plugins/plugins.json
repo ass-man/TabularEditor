@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    {
+      "id": "model-tree-color",
+      "name": "Model Tree Color",
+      "menuPath": "Model Tree Color...",
+      "pluginType": "assembly",
+      "source": "self",
+      "entryType": "TabularEditor.Plugins.ModelTreeColor.ModelTreeColorPlugin",
+      "singleInstance": true
+    },
+    {
+      "id": "model-json-viewer",
+      "name": "Model JSON/TMSL Viewer",
+      "menuPath": "Model JSON/TMSL Viewer...",
+      "pluginType": "script",
+      "source": "ModelJsonViewer\\ModelJsonViewerPlugin.csx",
+      "entryType": "ModelJsonViewerPlugin",
+      "singleInstance": true
+    }
+  ]
+}

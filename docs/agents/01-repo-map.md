@@ -16,6 +16,8 @@ First pass from targeted inspection of solution/project files, top-level folders
 ## Major Directories
 
 - `TabularEditor/`: main app. Contains `Program.cs`, `CommandLineHandler.cs`, `ConsoleHandler.cs`, `FormMain*`, `Scripting/`, `TextServices/`, `UI/`, `UI/Actions/`, `UI/Dialogs/`, `UIServices/`, resources, and settings.
+- `TabularEditor/Plugins/`: runtime plugin manifest and plugin sources (compiled and script-backed plugins).
+- `TabularEditor/bin/Debug/Plugins/`: runtime output copy consumed by the Debug executable for plugin script/manifest loading.
 - `TOMWrapper/`: model wrapper library. Contains `TOMWrapper/` objects, `Serialization/`, `Utils/`, `UndoFramework/`, `PropertyGridUI/`, `TextServices/`, and generated/template files.
 - `AntlrGrammars/`: ANTLR grammar sources for C# and DAX lexing.
 - `TabularEditorTest/`: app-level tests, including `CLITests.cs`, `ScriptEngineTests.cs`, BPA tests, UI tree tests, regression tests, and test data.
@@ -27,6 +29,7 @@ First pass from targeted inspection of solution/project files, top-level folders
 ## Where To Start
 
 - UI changes: `TabularEditor/FormMain.cs`, `TabularEditor/FormMain.Designer.cs`, `TabularEditor/UI/UIController*.cs`, `TabularEditor/UI/Actions/`, `TabularEditor/UI/Dialogs/`. Avoid designer/resource edits unless needed and planned.
+- Plugin runtime/UI changes: start in `TabularEditor/Plugins/Infrastructure/` plus plugin source under `TabularEditor/Plugins/`; when validating locally, ensure runtime copy under `TabularEditor/bin/Debug/Plugins/` is current.
 - TOM/model behavior: `TOMWrapper/TOMWrapper/*.cs`, `TOMWrapper/TOMWrapper/TabularModelHandler*.cs`, `TOMWrapper/Utils/`, `TOMWrapper/Serialization/`, `TOMWrapper/UndoFramework/`, then matching tests in `TOMWrapperTest/`.
 - CLI behavior: `TabularEditor/Program.cs`, `TabularEditor/CommandLineHandler.cs`, `TabularEditor/ConsoleHandler.cs`, then `TabularEditorTest/CLITests.cs`.
 - Tests: `TabularEditorTest/` for app/CLI/UI/scripting/BPA behavior; `TOMWrapperTest/` for model wrapper/serialization/undo/regression behavior.

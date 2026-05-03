@@ -116,6 +116,19 @@ Possible `dotnet` commands may fail or be incomplete because these are classic .
 dotnet build TabularEditor.sln --configuration Debug --no-restore
 ```
 
+## Required Build Tools (Windows)
+
+- Install Visual Studio Build Tools 2022 (or Visual Studio Community 2022) with the `.NET desktop build tools` / `.NET desktop development` workload so `MSBuild.exe` is available.
+- Install `.NET Framework 4.8 Developer Pack` (projects target `v4.8`).
+
+## Verified Working Build Command
+
+This command was executed successfully in this environment:
+
+```powershell
+"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" TabularEditor.sln /t:Build /p:Configuration=Debug /m
+```
+
 ## Not Verified Here
 
 - Full solution build.
@@ -132,3 +145,12 @@ dotnet build TabularEditor.sln --configuration Debug --no-restore
 - For UI changes, add targeted tests only where existing seams allow; otherwise document manual WinForms validation steps in the feature log.
 - For grammar changes, verify ANTLR generation before compiling consumers.
 - Record exact command, result, and limitation in the feature `implementation-log.md`.
+
+## Runtime Script Plugin Compiler Compatibility
+
+- Script-backed plugins (`*.csx` loaded by `PluginLoader`) compile through CodeDom at runtime and behave like an older C# compiler than the main project language version.
+- Use compatibility-safe syntax in runtime plugin scripts:
+  - avoid string interpolation (`$"..."`)
+  - prefer classic string concatenation/formatting
+- If a script plugin fails with parser errors like `CS1056 Unexpected character '$'`, treat it as a runtime compiler compatibility issue first.
+- Keep automated regression coverage for script compile/load paths (for example `TabularEditor.PluginLoaderTests.Load_ModelJsonViewerScriptPlugin_CompilesAndInstantiates`).

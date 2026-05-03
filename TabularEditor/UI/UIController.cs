@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using TabularEditor.Plugins.Infrastructure;
 using TabularEditor.PropertyGridExtension;
 using TabularEditor.TOMWrapper;
 using TabularEditor.TOMWrapper.Serialization;
@@ -33,6 +34,7 @@ namespace TabularEditor.UI
 
         public TabularModelHandler Handler { get; private set; }
         public TabularUITree TreeModel { get; private set; }
+        private readonly PluginRuntimeManager runtimePlugins;
 
         private UITreeSelection _selection;
         public UITreeSelection Selection {
@@ -78,6 +80,7 @@ namespace TabularEditor.UI
             {
                 plugin.RegisterActions(RegisterPluginCallback);
             }
+            runtimePlugins = new PluginRuntimeManager(this, UI.PluginsMenu);
 
             KeepAliveTimer = new System.Windows.Forms.Timer { Enabled = false };
             KeepAliveTimer.Interval = 60000;
@@ -206,6 +209,7 @@ namespace TabularEditor.UI
             UI.ModelMenu.Enabled = true;
 
             InitPlugins();
+            runtimePlugins?.OnModelLoaded();
 
             UI.FormMain.BPAForm.Model = Handler.Model;
             InvokeBPABackground();
@@ -410,6 +414,7 @@ namespace TabularEditor.UI
         public Label CurrentMeasureLabel;
         public FormMain FormMain;
         public ToolStripDropDownItem ModelMenu;
+        public ToolStripDropDownItem PluginsMenu;
         public ToolStripDropDownItem ToolsMenu;
         public ToolStripDropDownItem DynamicMenu;
         public ToolStripComboBox TranslationSelector;
