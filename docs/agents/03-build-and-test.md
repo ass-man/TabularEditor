@@ -129,11 +129,19 @@ This command was executed successfully in this environment:
 "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" TabularEditor.sln /t:Build /p:Configuration=Debug /m
 ```
 
+## Verified Working Test Command
+
+This targeted command was executed successfully in this environment:
+
+```powershell
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" TabularEditorTest\bin\Debug\TabularEditorTest.dll /Tests:TabularEditor.PluginLoaderTests.Load_AllScriptPluginsFromManifest_CompileAndInstantiate,TabularEditor.PluginLoaderTests.Load_ModelJsonViewerScriptPlugin_CompilesAndInstantiates
+```
+
 ## Not Verified Here
 
 - Full solution build.
 - NuGet package restore.
-- Test execution.
+- Full test suite execution across `TabularEditorTest` and `TOMWrapperTest`.
 - Installer project build.
 - ANTLR generated output regeneration.
 - T4 template regeneration.

@@ -36,8 +36,36 @@ First pass from targeted inspection of solution/project files, top-level folders
 - Parser/grammar work: `AntlrGrammars/CSharpLexer.g4`, `AntlrGrammars/DAXLexer.g4`, generated outputs, `TabularEditor/TextServices/`, and `TOMWrapper/TextServices/`.
 - Installer/release work: `TabularEditorInstaller/`, `signfiles.txt`, project publish/signing settings. Do not touch unless explicitly required.
 
+## Plugin Architecture Entry Points
+
+- Runtime manager and menu wiring: `TabularEditor/Plugins/Infrastructure/PluginRuntimeManager.cs`.
+- Manifest parsing and descriptor model: `TabularEditor/Plugins/Infrastructure/PluginCatalog.cs`, `TabularEditor/Plugins/Infrastructure/PluginDescriptor.cs`, `TabularEditor/Plugins/plugins.json`.
+- Plugin load/compile behavior (assembly and script): `TabularEditor/Plugins/Infrastructure/PluginLoader.cs`.
+- Host capabilities exposed to plugin windows/scripts: `TabularEditor/Plugins/Infrastructure/PluginHostContext.cs`.
+
+## Runtime vs Source Paths
+
+- Plugin source of truth: `TabularEditor/Plugins/...`.
+- Debug runtime copy consumed by executable: `TabularEditor/bin/Debug/Plugins/...`.
+- If runtime behavior does not match source edits, verify the output copy and restart Tabular Editor.
+
+## Test Coverage Map
+
+- Plugin script compile/load regression coverage: `TabularEditorTest/Plugins/PluginLoaderTests.cs`.
+- Manifest-driven test validates all script plugins declared in `TabularEditor/Plugins/plugins.json`.
+
+## Do Not Touch (Unless Required)
+
+- Installer/release artifacts: `TabularEditorInstaller/`, `signfiles.txt`, publish/signing settings.
+- Generated or generated-adjacent outputs: ANTLR generated files under `AntlrGrammars/obj/...`, designer-generated WinForms code, and other generated outputs unless regeneration is explicitly part of the approved change.
+
 ## Uncertain
 
-- Exact Visual Studio/MSBuild version required for successful local build was not verified.
-- Exact test runner command was not verified in this environment.
 - Generated ANTLR/T4 workflow needs future verification before changing grammar or generated files.
+
+## Verified Tooling In This Environment
+
+- MSBuild verified:
+  - `C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe`
+- MSTest runner verified:
+  - `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe`
