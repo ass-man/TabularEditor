@@ -153,4 +153,12 @@ This command was executed successfully in this environment:
   - avoid string interpolation (`$"..."`)
   - prefer classic string concatenation/formatting
 - If a script plugin fails with parser errors like `CS1056 Unexpected character '$'`, treat it as a runtime compiler compatibility issue first.
-- Keep automated regression coverage for script compile/load paths (for example `TabularEditor.PluginLoaderTests.Load_ModelJsonViewerScriptPlugin_CompilesAndInstantiates`).
+- After any edit to `TabularEditor/Plugins/**/*.csx`, run plugin script compile/load tests before considering the change done.
+- Required regression coverage includes:
+  - `TabularEditor.PluginLoaderTests.Load_AllScriptPluginsFromManifest_CompileAndInstantiate`
+  - `TabularEditor.PluginLoaderTests.Load_ModelJsonViewerScriptPlugin_CompilesAndInstantiates`
+- Example targeted test command:
+
+```powershell
+vstest.console TabularEditorTest\bin\Debug\TabularEditorTest.dll /Tests:TabularEditor.PluginLoaderTests.Load_AllScriptPluginsFromManifest_CompileAndInstantiate
+```

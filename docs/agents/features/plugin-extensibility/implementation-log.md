@@ -54,6 +54,7 @@
 | 2026-05-03 | `TabularEditor.csproj` build using located MSBuild | PASS | Build succeeded; observed lock warnings (`MSB3026`) when `TabularEditor.exe` was running. |
 | 2026-05-03 | `TabularEditorTest.csproj` build | PASS | Build succeeded with existing dependency warnings (no new compile errors). |
 | 2026-05-03 | `vstest.console.exe` targeted run of `PluginLoaderTests` | PASS | `TabularEditor.PluginLoaderTests.Load_ModelJsonViewerScriptPlugin_CompilesAndInstantiates` passed. |
+| 2026-05-03 | `vstest.console.exe` targeted run of manifest-driven plugin script tests | PASS | `Load_AllScriptPluginsFromManifest_CompileAndInstantiate` and `Load_ModelJsonViewerScriptPlugin_CompilesAndInstantiates` both passed. |
 
 ## Bugfix Addendum (2026-05-03)
 
@@ -75,6 +76,7 @@
     - Added `Copy as Text` button with model key + color payload.
   - `TabularEditorTest/Plugins/PluginLoaderTests.cs`:
     - Added automated regression test that loads and compiles the JSON/TMSL script plugin via `PluginLoader`.
+    - Added manifest-driven automated regression test that loads and compiles all script plugins declared in plugin manifests.
   - `TabularEditorTest/TabularEditorTest.csproj`:
     - Included the new plugin-loader test file in test compilation.
 

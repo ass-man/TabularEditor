@@ -27,7 +27,12 @@
 - If runtime behavior does not match source changes:
   - ensure output copy is refreshed
   - restart Tabular Editor
+- After any `*.csx` edit:
+  - run script plugin compile/load regression tests before manual UI validation
+  - treat this as required, because MSBuild does not compile plugin scripts
 
 ## Regression test coverage
 
-- `TabularEditorTest/Plugins/PluginLoaderTests.cs` contains compile/load validation for the JSON/TMSL script plugin.
+- `TabularEditorTest/Plugins/PluginLoaderTests.cs` contains:
+  - single-plugin compile/load coverage for the JSON/TMSL viewer script
+  - manifest-driven compile/load coverage for all script plugins
