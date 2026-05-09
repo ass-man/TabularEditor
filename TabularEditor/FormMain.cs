@@ -714,6 +714,43 @@ Selected.Hierarchies.ForEach(item => item.TranslatedDisplayFolders.SetAll(item.D
                     UI.Database_Open($"localhost:{localInstance.Port}", "");
                 }
             }
+            else
+            {
+                AutoOpenLastModel();
+            }
+        }
+
+        private void AutoOpenLastModel()
+        {
+            var last = RecentFiles.Current.LastOpenedModel;
+            if (last == null) return;
+
+            try
+            {
+                if (last.SourceType == RecentModelSourceType.File)
+                {
+                    if (string.IsNullOrWhiteSpace(last.Path)) return;
+                    if (!File.Exists(last.Path) &&
+                        !Directory.Exists(last.Path) &&
+                        !File.Exists(Path.Combine(last.Path, "database.json")) &&
+                        !File.Exists(Path.Combine(last.Path, "model.tmd")) &&
+                        !File.Exists(Path.Combine(last.Path, "model.tmdl")))
+                        return;
+
+                    UI.File_Open(last.Path);
+                    return;
+                }
+
+                if (last.SourceType == RecentModelSourceType.Database &&
+                    !string.IsNullOrWhiteSpace(last.ConnectionString))
+                {
+                    UI.Database_Open(last.ConnectionString, last.DatabaseName);
+                }
+            }
+            catch (Exception ex)
+            {
+                TabularModelHandler.Log("Failed auto-opening last model. " + ex.Message);
+            }
         }
 
         public void UpdateTreeUIButtons()

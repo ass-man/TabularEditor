@@ -57,6 +57,7 @@
 /TabularEditor.UI
 *.user
 /Publish/*
+**/Publish/
 /.cr
 /TOMWrapperTest/obj
 /AntlrGrammars/obj

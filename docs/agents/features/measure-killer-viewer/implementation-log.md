@@ -32,3 +32,12 @@
 - Layout fix:
   - Moved the toolbar, header, and tree into a three-row `TableLayoutPanel` so the tree can no longer render behind the header controls.
   - Verified with `build.ps1`; exit code was 0 and no error lines were found in the captured raw log.
+- Impact visualization:
+  - Added impact classification and legend nodes.
+  - Colors now distinguish unused, relationship-only, relationship-only isolated table/key usage, unused-measure-only dependencies, report-facing dependencies, model-only dependencies, relationships, and general used objects.
+  - Object nodes now include dependency child folders for visuals, filters, relationships, measure/artifact dependencies, sorting, Power Query, hierarchy, and model dependencies.
+- Follow-up UI fixes:
+  - Table impact classification now aggregates child report/model/unused-measure usage before falling back to the table's own unused flags.
+  - Selected-object expansion still shows descendants, but impact and object-type checkboxes are applied to those descendants.
+  - The detail pane now wraps text, uses a narrower right-side split, defaults to lineage-related fields/dependency arrays, and exposes a `Full details` checkbox for the raw JSON object.
+  - Verified focused plugin tests in `bin\Debug`; the full test suite still needs `TE_TestServer` for AS-engine integration tests.

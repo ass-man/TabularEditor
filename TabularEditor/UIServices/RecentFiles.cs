@@ -9,6 +9,7 @@ namespace TabularEditor.UIServices
     public class RecentFiles
     {
         public List<string> RecentHistory = new List<string>();
+        public RecentModel LastOpenedModel;
 
         [JsonIgnore]
         static readonly string RECENTFILES_PATH = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\TabularEditor\RecentFiles.json";
@@ -51,5 +52,42 @@ namespace TabularEditor.UIServices
 
             Current.RecentHistory.Add(fileName);
         }
+
+        public static void SetLastOpenedFile(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName)) return;
+
+            Current.LastOpenedModel = new RecentModel
+            {
+                SourceType = RecentModelSourceType.File,
+                Path = fileName
+            };
+        }
+
+        public static void SetLastOpenedDatabase(string connectionString, string databaseName)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString)) return;
+
+            Current.LastOpenedModel = new RecentModel
+            {
+                SourceType = RecentModelSourceType.Database,
+                ConnectionString = connectionString,
+                DatabaseName = databaseName
+            };
+        }
+    }
+
+    public enum RecentModelSourceType
+    {
+        File,
+        Database
+    }
+
+    public class RecentModel
+    {
+        public RecentModelSourceType SourceType { get; set; }
+        public string Path { get; set; }
+        public string ConnectionString { get; set; }
+        public string DatabaseName { get; set; }
     }
 }

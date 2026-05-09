@@ -64,6 +64,7 @@ namespace TabularEditor.UI
 
                         LoadTabularModelToUI();
                         RecentFiles.Add(fileName);
+                        RecentFiles.SetLastOpenedFile(File_Current);
                         RecentFiles.Save();
                         UI.FormMain.PopulateRecentFilesList();
 

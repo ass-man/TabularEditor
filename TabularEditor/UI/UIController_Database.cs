@@ -178,6 +178,8 @@ namespace TabularEditor.UI
 
                     Handler.OnExternalChange += Handler_OnExternalChange;
                     if (oldHandler != null) oldHandler.OnExternalChange -= Handler_OnExternalChange;
+                    RecentFiles.SetLastOpenedDatabase(connectionString, Handler.Database?.Name ?? databaseName);
+                    RecentFiles.Save();
                 }
                 catch (Exception ex)
                 {
