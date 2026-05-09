@@ -1,0 +1,83 @@
+/// Transaction classification dimension for finance and inventory movement analysis.
+table D_TransactionType
+	lineageTag: e3163bd1-311c-499e-81c5-0a627a8d601b
+
+	column D_TransactionType_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 4b876ff5-7dd2-4fc9-aaca-f2ca00533d31
+		summarizeBy: none
+		sourceColumn: D_TransactionType_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Transaction Type ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 2f4aa6a5-bf4b-4ec4-a187-e71ddf8784aa
+		summarizeBy: count
+		sourceColumn: WWI Transaction Type ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Transaction Type'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 0b5cff86-6029-4fb6-8dee-9067db1bd911
+		summarizeBy: none
+		sourceColumn: Transaction Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid From'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 371023a2-d213-461a-9db0-b4a70e019685
+		summarizeBy: none
+		sourceColumn: Valid From
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid To'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: a2c8a483-2251-4378-a9e7-b2e32091613e
+		summarizeBy: none
+		sourceColumn: Valid To
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: b19a3c3d-0b11-4b71-8281-27a2c36b8d04
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_TransactionType' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_TransactionType = Source{[Schema="common",Item="D_TransactionType"]}[Data]
+				in
+				    common_D_TransactionType
+

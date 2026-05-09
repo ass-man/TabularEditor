@@ -1,0 +1,151 @@
+/// Customer attributes used for segmentation, buying group analysis, and account performance.
+table D_Customer
+	lineageTag: 9c167730-5b08-461d-8b96-b8b578dba65b
+
+	/// Distinct customers in the customer dimension.
+	measure 'Customer Count' = DISTINCTCOUNT('D_Customer'[WWI Customer ID])
+		formatString: #,0
+		displayFolder: Customer
+		lineageTag: c8d581d5-a152-4627-b64e-b4b1186ebcf2
+
+	/// Customers with sales in the current filter context.
+	measure 'Active Sales Customers' = DISTINCTCOUNT('F_Sale'[D_Customer_SID])
+		formatString: #,0
+		displayFolder: Customer
+		lineageTag: 3fc43b28-df1e-4c87-acb2-075d6b9201cf
+
+	/// Net sales divided by active sales customers.
+	measure 'Sales per Active Customer' = DIVIDE([Net Sales], [Active Sales Customers])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Customer
+		lineageTag: 7ab893e2-8aed-4ffd-8dd6-8682407a2ce9
+
+	column D_Customer_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 5e667a9c-7c50-4a1a-af0b-eec3b102a715
+		summarizeBy: none
+		sourceColumn: D_Customer_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Customer ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 6bff22dc-cd56-4c63-9ac4-aad74fb1d93f
+		summarizeBy: count
+		sourceColumn: WWI Customer ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Customer
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(100)
+		lineageTag: 05bc5696-44b4-4bfb-b4b5-679247a85798
+		summarizeBy: none
+		sourceColumn: Customer
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Bill To Customer'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(100)
+		lineageTag: 18dd8643-deca-4e18-b248-09b5f3255dfa
+		summarizeBy: none
+		sourceColumn: Bill To Customer
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: cbd5adcb-ecc8-44ca-9735-4a6f96e0b6d8
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Buying Group'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: c672b41f-dbef-4f46-b073-9b4bdd9f8187
+		summarizeBy: none
+		sourceColumn: Buying Group
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Primary Contact'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 4beff248-0bd8-4876-a9fc-c366b990f14a
+		summarizeBy: none
+		sourceColumn: Primary Contact
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Postal Code'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(10)
+		lineageTag: a890c49c-0e4c-431e-aea7-0f5e16efe611
+		summarizeBy: none
+		sourceColumn: Postal Code
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid From'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 3dffd5de-540d-42fc-9b04-3d68a797a7b3
+		summarizeBy: none
+		sourceColumn: Valid From
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid To'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 8f3c0d32-cfda-40d4-bb2a-4eacb5c57039
+		summarizeBy: none
+		sourceColumn: Valid To
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ecd3e14c-ce6c-4730-9c44-b6cef9d6132a
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_Customer' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_Customer = Source{[Schema="common",Item="D_Customer"]}[Data]
+				in
+				    common_D_Customer
+

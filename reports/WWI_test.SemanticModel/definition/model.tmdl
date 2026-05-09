@@ -6,9 +6,26 @@ model Model
 		legacyRedirects
 		returnErrorValuesAsNull
 
-annotation __PBI_TimeIntelligenceEnabled = 1
+annotation __TEdtr = 1
 
 annotation PBI_ProTooling = ["DevMode"]
 
-ref cultureInfo en-US
+annotation PBI_QueryOrder = ["D_Customer","D_Date","D_Employee","D_StockItem","D_PaymentMethod","D_TransactionType","F_Movement","D_Supplier","F_Purchase","F_StockHolding","F_Order","F_Sale","F_Transaction","D_City"]
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+ref table D_Customer
+ref table D_Date
+ref table D_Employee
+ref table D_StockItem
+ref table D_PaymentMethod
+ref table D_TransactionType
+ref table F_Movement
+ref table D_Supplier
+ref table F_Purchase
+ref table F_StockHolding
+ref table F_Order
+ref table F_Sale
+ref table F_Transaction
+ref table D_City
 

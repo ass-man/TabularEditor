@@ -1,0 +1,104 @@
+/// Employee dimension for salesperson, picker, and operational accountability analysis.
+table D_Employee
+	lineageTag: a6fa2eaf-a2ed-4491-8d3c-580f796b67b8
+
+	column D_Employee_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: bff0d17a-64a8-4428-a38f-e3e3e860a935
+		summarizeBy: none
+		sourceColumn: D_Employee_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Employee ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 5ebba26d-c347-49c3-9c1c-ae17f0bc8100
+		summarizeBy: count
+		sourceColumn: WWI Employee ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Employee
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 673319eb-1e36-492a-8e75-203cfe5ccf57
+		summarizeBy: none
+		sourceColumn: Employee
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Preferred Name'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 108556df-2149-4f87-ab4a-9a0ca8c0ca50
+		summarizeBy: none
+		sourceColumn: Preferred Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Salesperson'
+		dataType: boolean
+		isNullable: false
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 99a7248d-4ee8-4122-95e7-279a1d40747c
+		summarizeBy: none
+		sourceColumn: Is Salesperson
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid From'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 2658cb5a-d096-4364-987a-c6e603eb653f
+		summarizeBy: none
+		sourceColumn: Valid From
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid To'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 51172242-9524-4d1f-887e-c1a10b07d2bb
+		summarizeBy: none
+		sourceColumn: Valid To
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 73dd4fb7-ce25-4ce7-8cb0-89fb0ee26f1b
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_Employee' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_Employee = Source{[Schema="common",Item="D_Employee"]}[Data]
+				in
+				    common_D_Employee
+

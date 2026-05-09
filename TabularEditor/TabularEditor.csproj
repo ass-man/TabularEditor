@@ -784,6 +784,9 @@
     <None Include="Plugins\ModelJsonViewer\ModelJsonViewerPlugin.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Plugins\MeasureKillerViewer\MeasureKillerViewerPlugin.csx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Plugins\plugins.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

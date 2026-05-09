@@ -1,0 +1,169 @@
+/// Purchase order fact table for supplier fulfillment and receiving analysis.
+table F_Purchase
+	lineageTag: 980f6870-b13a-4ff0-abbf-f3f61fa793ac
+
+	/// Distinct purchase order fact rows.
+	measure 'Purchase Order Count' = DISTINCTCOUNT('F_Purchase'[Purchase Key])
+		formatString: #,0
+		displayFolder: Purchasing
+		lineageTag: 6be880c6-82b7-4ae3-a3d6-a494d5d7f2ea
+
+	/// Received outers divided by ordered outers.
+	measure 'Receipt Completion %' = DIVIDE([Purchase Received Outers], [Purchase Ordered Outers])
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Purchasing
+		lineageTag: 8f5a6e5e-4808-4e5a-90f7-88d86a81fa2f
+
+	/// Finalized purchase order rows.
+	measure 'Finalized Purchase Orders' = CALCULATE([Purchase Order Count], 'F_Purchase'[Is Order Finalized] = TRUE())
+		formatString: #,0
+		displayFolder: Purchasing
+		lineageTag: 8be0dab3-1379-4946-83db-7e48fbbedf50
+
+	measure 'Purchase Ordered Quantity' = SUM('F_Purchase'[Ordered Quantity])
+		formatString: #,0
+		lineageTag: da1fad7c-9a23-4029-89a6-9c123ef28ffc
+
+	measure 'Purchase Ordered Outers' = SUM('F_Purchase'[Ordered Outers])
+		formatString: #,0
+		lineageTag: 03382f70-7b7d-48e8-beeb-ac059fca4862
+
+	measure 'Purchase Received Outers' = SUM('F_Purchase'[Received Outers])
+		formatString: #,0
+		lineageTag: 1045bdf0-90b0-44d5-9dcb-31d70d3895f5
+
+	column 'Purchase Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 1b5d309a-ba90-4055-bf26-382fae1c26f0
+		summarizeBy: count
+		sourceColumn: Purchase Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isNullable: false
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 4dccf8d9-4217-42a2-875a-a2bf8015f0be
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column D_Supplier_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e7c20f79-726c-4114-b101-ad879f3ddd5a
+		summarizeBy: none
+		sourceColumn: D_Supplier_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_StockItem_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 2f0c5091-989a-478e-8686-4397be3c2fa1
+		summarizeBy: none
+		sourceColumn: D_StockItem_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Purchase Order ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 44d65ace-18bc-448d-a66f-1d5a3ea0b38f
+		summarizeBy: count
+		sourceColumn: WWI Purchase Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Ordered Outers'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 83745a3b-0b97-490f-92ec-7af4fbc0ac64
+		summarizeBy: sum
+		sourceColumn: Ordered Outers
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Ordered Quantity'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e5dacb4b-e044-45b7-8a7d-c368829f632f
+		summarizeBy: sum
+		sourceColumn: Ordered Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Received Outers'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: bd6c6861-e334-4712-9c01-cdb9e202725b
+		summarizeBy: sum
+		sourceColumn: Received Outers
+
+		annotation SummarizationSetBy = Automatic
+
+	column Package
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: a7f1b58d-867d-44ed-a637-a7ac64582834
+		summarizeBy: none
+		sourceColumn: Package
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Order Finalized'
+		dataType: boolean
+		isNullable: false
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 1fb577dd-59ef-4d68-b099-9dbf699b9594
+		summarizeBy: none
+		sourceColumn: Is Order Finalized
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 81ceaf3a-2ff1-4ae8-8557-d3279f272469
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'delivery F_Purchase' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    delivery_F_Purchase = Source{[Schema="delivery",Item="F_Purchase"]}[Data]
+				in
+				    delivery_F_Purchase
+

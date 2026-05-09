@@ -1,0 +1,139 @@
+/// Supplier attributes for procurement and inventory replenishment analysis.
+table D_Supplier
+	lineageTag: 6043afb6-cf87-48ea-ae92-575160d2150d
+
+	/// Distinct suppliers in the supplier dimension.
+	measure 'Supplier Count' = DISTINCTCOUNT('D_Supplier'[WWI Supplier ID])
+		formatString: #,0
+		displayFolder: Supplier
+		lineageTag: 5e3c5c6b-c10f-4967-9465-5d02c063ec3a
+
+	column D_Supplier_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 4aed5ec3-d5aa-421c-8ea6-fb9eb17b3e7a
+		summarizeBy: none
+		sourceColumn: D_Supplier_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Supplier ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e8db4d3e-5963-41bd-b168-a79b9bbd0f60
+		summarizeBy: count
+		sourceColumn: WWI Supplier ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Supplier
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(100)
+		lineageTag: 9dbaa1d5-6d91-465c-9724-4b8bdf2dddb7
+		summarizeBy: none
+		sourceColumn: Supplier
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: cf357a55-9e03-467c-b578-f922f3cd6144
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Primary Contact'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: cc4aa32a-3ac3-4e3b-a04f-7443ec28f2f7
+		summarizeBy: none
+		sourceColumn: Primary Contact
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Supplier Reference'
+		dataType: string
+		sourceProviderType: nvarchar(20)
+		lineageTag: 34f7c0c6-f21d-4e7f-b7d0-7d9f27c90aa2
+		summarizeBy: none
+		sourceColumn: Supplier Reference
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Payment Days'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 026efab0-90f0-462e-b0d3-23217f286feb
+		summarizeBy: sum
+		sourceColumn: Payment Days
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Postal Code'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(10)
+		lineageTag: 92acc077-9049-40ce-ba82-e95a1460d39d
+		summarizeBy: none
+		sourceColumn: Postal Code
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid From'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: f59af186-b2b1-4539-b28c-9e7d0dabaf55
+		summarizeBy: none
+		sourceColumn: Valid From
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid To'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 8777d4bb-e070-456f-9b44-12aff9fcbedd
+		summarizeBy: none
+		sourceColumn: Valid To
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: f1630043-8470-4fa2-82c9-c971ca4132ba
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_Supplier' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_Supplier = Source{[Schema="common",Item="D_Supplier"]}[Data]
+				in
+				    common_D_Supplier
+

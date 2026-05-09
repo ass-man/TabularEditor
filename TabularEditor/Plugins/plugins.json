@@ -17,6 +17,15 @@
       "source": "ModelJsonViewer\\ModelJsonViewerPlugin.csx",
       "entryType": "ModelJsonViewerPlugin",
       "singleInstance": true
+    },
+    {
+      "id": "measure-killer-viewer",
+      "name": "Measure Killer Output Viewer",
+      "menuPath": "Measure Killer Output Viewer...",
+      "pluginType": "script",
+      "source": "MeasureKillerViewer\\MeasureKillerViewerPlugin.csx",
+      "entryType": "MeasureKillerViewerPlugin",
+      "singleInstance": true
     }
   ]
 }

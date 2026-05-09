@@ -1,0 +1,379 @@
+/// Invoice-level sales fact table. Core source for revenue, margin, customer, product, and geography KPIs.
+table F_Sale
+	lineageTag: 6a1895aa-a5d1-400c-84f3-c24195cfcfe5
+
+	/// Gross invoiced sales including tax. Use for top-line revenue cards and trend visuals.
+	measure 'Sales Amount' = SUM('F_Sale'[Total Including Tax])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Executive KPIs
+		lineageTag: 544a280b-b802-4ad9-aa45-a45fb1f88c40
+
+	/// Sales excluding tax. Recommended primary revenue metric for margin analysis.
+	measure 'Net Sales' = SUM('F_Sale'[Total Excluding Tax])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Executive KPIs
+		lineageTag: 452f2a88-97df-46eb-b959-897a299b15fd
+
+	/// Total tax amount on invoiced sales.
+	measure 'Sales Tax' = SUM('F_Sale'[Tax Amount])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Sales
+		lineageTag: a89ef951-783b-44c5-8b32-332d6f3a7bd6
+
+	/// Gross profit from invoice lines.
+	measure 'Gross Profit' = SUM('F_Sale'[Profit])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Executive KPIs
+		lineageTag: 507219e8-c5b4-43e9-87a6-5c41c362fd9a
+
+	/// Gross profit as a percentage of net sales.
+	measure 'Gross Margin %' = DIVIDE([Gross Profit], [Net Sales])
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Executive KPIs
+		lineageTag: 2afbd349-273d-4650-8053-7c8afb544b86
+
+	/// Total units sold.
+	measure 'Sales Quantity' = SUM('F_Sale'[Quantity])
+		formatString: #,0
+		displayFolder: Sales
+		lineageTag: cdb449bd-6ebf-46e7-b234-2b300cdc8a04
+
+	/// Distinct invoice count.
+	measure 'Invoice Count' = DISTINCTCOUNT('F_Sale'[WWI Invoice ID])
+		formatString: #,0
+		displayFolder: Sales
+		lineageTag: 58310f4e-185d-4e05-9893-c0afd2f7a659
+
+	/// Number of invoice fact rows.
+	measure 'Sale Line Count' = COUNTROWS('F_Sale')
+		formatString: #,0
+		displayFolder: Sales
+		lineageTag: be83d0e5-7761-4548-91d2-3b7d4b466e31
+
+	/// Average gross sales value per invoice.
+	measure 'Average Invoice Value' = DIVIDE([Sales Amount], [Invoice Count])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Executive KPIs
+		lineageTag: 4541762c-4b0f-426a-b097-ad3a33ecf946
+
+	/// Net sales divided by units sold.
+	measure 'Average Unit Price' = DIVIDE([Net Sales], [Sales Quantity])
+		formatString: $#,0.00;(-$#,0.00);$#,0.00
+		displayFolder: Sales
+		lineageTag: e7a9ae34-0639-4ce9-9a2e-d13a9f1ddc59
+
+	/// Share of sold items that were chiller items.
+	measure 'Chiller Item Mix %' = DIVIDE(SUM('F_Sale'[Total Chiller Items]), SUM('F_Sale'[Total Chiller Items]) + SUM('F_Sale'[Total Dry Items]))
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Sales Mix
+		lineageTag: 5869e5c9-d3b4-466a-826b-36837c74ac36
+
+	/// Share of sold items that were dry items.
+	measure 'Dry Item Mix %' = DIVIDE(SUM('F_Sale'[Total Dry Items]), SUM('F_Sale'[Total Chiller Items]) + SUM('F_Sale'[Total Dry Items]))
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Sales Mix
+		lineageTag: da68b492-fe73-4b62-a3ef-99bc581bfd8d
+
+	/// Year-to-date gross sales amount based on the active sales date relationship.
+	measure 'Sales Amount YTD' = TOTALYTD([Sales Amount], 'D_Date'[Date])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Time Intelligence
+		lineageTag: 8b9dfe8f-9feb-4913-b1c9-8850ea0ee335
+
+	/// Gross sales for the same period in the prior year.
+	measure 'Sales Amount PY' = CALCULATE([Sales Amount], SAMEPERIODLASTYEAR('D_Date'[Date]))
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Time Intelligence
+		lineageTag: 12493ad5-a8fd-49db-9363-30c7311c2d1b
+
+	/// Absolute year-over-year sales change.
+	measure 'Sales YoY Change' = [Sales Amount] - [Sales Amount PY]
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Time Intelligence
+		lineageTag: 6a95af63-1aa8-4712-a651-45e06d20d03f
+
+	/// Percentage year-over-year sales change.
+	measure 'Sales YoY %' = DIVIDE([Sales YoY Change], [Sales Amount PY])
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Time Intelligence
+		lineageTag: ce274024-b4a9-477d-9ab5-82cea8a02826
+
+	/// Year-to-date gross profit.
+	measure 'Gross Profit YTD' = TOTALYTD([Gross Profit], 'D_Date'[Date])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Time Intelligence
+		lineageTag: 7ca5d993-0cf3-4747-8c2b-5083d7c91045
+
+	/// Sales amount evaluated by invoice date instead of the active delivery date relationship.
+	measure 'Invoiced Sales Amount' = CALCULATE([Sales Amount], USERELATIONSHIP('F_Sale'[Invoice Date], 'D_Date'[Date]))
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Role-Playing Dates
+		lineageTag: 4a933bb7-55e5-4dab-a399-d8c10142b2d5
+
+	/// Sales amount using the active delivery date relationship.
+	measure 'Delivered Sales Amount' = [Sales Amount]
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Role-Playing Dates
+		lineageTag: 65028deb-d388-4bee-bcdc-61c54b527bb4
+
+	column 'Sale Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 002f93e0-9423-4ac7-a88b-258c64f2a1ed
+		summarizeBy: count
+		sourceColumn: Sale Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_City_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: a12c9b31-cac0-4ccf-9649-ee4d8d238b75
+		summarizeBy: count
+		sourceColumn: D_City_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_Customer_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: f8630d22-03b9-451c-9d43-9d1561a09fc9
+		summarizeBy: count
+		sourceColumn: D_Customer_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column BillTo_D_Customer_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: f5dcfff3-fecd-4fde-b532-1c3a14bdd71a
+		summarizeBy: none
+		sourceColumn: BillTo_D_Customer_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_StockItem_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 7aed8751-5c90-48ce-b155-af68f3bac88b
+		summarizeBy: none
+		sourceColumn: D_StockItem_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Invoice Date'
+		dataType: dateTime
+		isNullable: false
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 3907c067-a879-474a-9aeb-0894980212fe
+		summarizeBy: none
+		sourceColumn: Invoice Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Delivery Date'
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 5934dda1-4c02-48f6-b1f5-0fa9a8763b08
+		summarizeBy: none
+		sourceColumn: Delivery Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column D_Employee_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 951e1837-11d3-43bb-83e2-265dc41909d5
+		summarizeBy: none
+		sourceColumn: D_Employee_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Invoice ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 1abce86b-8639-42dd-a9c2-aa74788ac82c
+		summarizeBy: count
+		sourceColumn: WWI Invoice ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Description
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(100)
+		lineageTag: c23b44d4-a796-475b-9961-eff5efdb56f6
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column Package
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 56922f92-4d32-455c-8b5c-097c95bfaf27
+		summarizeBy: none
+		sourceColumn: Package
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quantity
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 1728802f-ae34-471a-b355-72aeb72720ef
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Unit Price'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 313f9cda-426a-44eb-bd66-0d3e456ea50f
+		summarizeBy: sum
+		sourceColumn: Unit Price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Tax Rate'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 3)
+		lineageTag: 6e114bbe-793c-49d9-af8f-b09b1a6189b1
+		summarizeBy: sum
+		sourceColumn: Tax Rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Total Excluding Tax'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 21638174-3eb6-46b8-b950-c35b857d22cf
+		summarizeBy: sum
+		sourceColumn: Total Excluding Tax
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Tax Amount'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 7ecb55ff-2a97-4a70-b5b2-32dd72499d84
+		summarizeBy: sum
+		sourceColumn: Tax Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Profit
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 68958aa9-8df4-47f7-b50e-4c699a92f968
+		summarizeBy: sum
+		sourceColumn: Profit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Total Including Tax'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 1514487d-ed08-441d-a42c-e983286d87bb
+		summarizeBy: sum
+		sourceColumn: Total Including Tax
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Total Dry Items'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e69d03b2-84cf-4bba-9c10-f6897ebbaff2
+		summarizeBy: sum
+		sourceColumn: Total Dry Items
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Total Chiller Items'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 07283ae2-bd71-4bba-919c-750ab33bd98b
+		summarizeBy: sum
+		sourceColumn: Total Chiller Items
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e7788d7d-3d20-4896-bfe0-d57add59cecc
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'finance F_Sale' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    finance_F_Sale = Source{[Schema="finance",Item="F_Sale"]}[Data]
+				in
+				    finance_F_Sale
+

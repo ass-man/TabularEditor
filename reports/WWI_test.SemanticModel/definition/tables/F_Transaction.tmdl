@@ -1,0 +1,260 @@
+/// Financial transaction fact table for receivables, balances, and payment-method analysis.
+table F_Transaction
+	lineageTag: 9363cb38-687f-4a49-9dcf-1ca4daa38b01
+
+	/// Gross transaction amount.
+	measure 'Transaction Amount' = SUM('F_Transaction'[Total Including Tax])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Finance
+		lineageTag: e15d00ea-e695-4477-ba4b-03ee6cf3b453
+
+	/// Transaction amount excluding tax.
+	measure 'Net Transaction Amount' = SUM('F_Transaction'[Total Excluding Tax])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Finance
+		lineageTag: 82e7f438-eec3-4b6e-a555-983fdcc50636
+
+	/// Outstanding balance as a percentage of gross transaction amount.
+	measure 'Outstanding Balance %' = DIVIDE([Outstanding Balance Amount], [Transaction Amount])
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Finance
+		lineageTag: 18f25113-2f65-483f-9400-e20e7a3e8806
+
+	/// Distinct financial transaction count.
+	measure 'Transaction Count' = DISTINCTCOUNT('F_Transaction'[Transaction Key])
+		formatString: #,0
+		displayFolder: Finance
+		lineageTag: 686b8511-72e2-407e-af43-01c290c773c1
+
+	/// Transactions not finalized.
+	measure 'Open Transactions' = CALCULATE([Transaction Count], 'F_Transaction'[Is Finalized] = FALSE())
+		formatString: #,0
+		displayFolder: Finance
+		lineageTag: 29f4d843-d7dc-4ebf-985c-a53e1186cf8c
+
+	measure 'Outstanding Balance Amount' = SUM('F_Transaction'[Outstanding Balance])
+		formatString: $#,0;(-$#,0);$#,0
+		lineageTag: fa381394-0761-4602-9a4e-7c8e0cd8b531
+
+	column 'Transaction Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 886db586-ec16-4c92-baa1-6f64a7c697b8
+		summarizeBy: count
+		sourceColumn: Transaction Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isNullable: false
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 7c1d65e0-1564-4da4-81fd-26603263d644
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column D_Customer_SID
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 8317945a-48c1-4f05-86d6-d976c74c509b
+		summarizeBy: count
+		sourceColumn: D_Customer_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column BillTo_D_Customer_SID
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 07f64d79-7ec3-4bd0-83cd-e87531e78baa
+		summarizeBy: none
+		sourceColumn: BillTo_D_Customer_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_Supplier_SID
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: d4e6b4d6-bf2f-488f-b093-52a4866d8168
+		summarizeBy: none
+		sourceColumn: D_Supplier_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_TransactionType_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 8cbc6bb2-ff6b-47a9-b0b1-e0bf6a0770ba
+		summarizeBy: none
+		sourceColumn: D_TransactionType_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_PaymentMethod_SID
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 04569d28-236b-4dc3-bb2b-f86bb68beee5
+		summarizeBy: none
+		sourceColumn: D_PaymentMethod_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Customer Transaction ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 5aa9ffee-e71c-47f9-ad03-dca0e046e167
+		summarizeBy: count
+		sourceColumn: WWI Customer Transaction ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Supplier Transaction ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 1dcb07c8-b8a1-4777-ac3e-116d7c732be6
+		summarizeBy: count
+		sourceColumn: WWI Supplier Transaction ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Invoice ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 0fb17cfb-7bee-4880-af47-97de7e3f96ef
+		summarizeBy: count
+		sourceColumn: WWI Invoice ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Purchase Order ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 52715db5-578a-4413-b058-dbad684fffdf
+		summarizeBy: count
+		sourceColumn: WWI Purchase Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Supplier Invoice Number'
+		dataType: string
+		sourceProviderType: nvarchar(20)
+		lineageTag: a7f73196-8fc7-4c91-aa8f-476124a7999f
+		summarizeBy: none
+		sourceColumn: Supplier Invoice Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Total Excluding Tax'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: f3fb9aee-4400-4e2c-a451-328f9a10f437
+		summarizeBy: sum
+		sourceColumn: Total Excluding Tax
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Tax Amount'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: b0a909e9-4542-42da-a198-4791c4b291b2
+		summarizeBy: sum
+		sourceColumn: Tax Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Total Including Tax'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: b4b19ab6-ec1b-49ad-9b5d-97a9cf71aea2
+		summarizeBy: sum
+		sourceColumn: Total Including Tax
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Outstanding Balance'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 837b5db9-d189-477c-9c15-b26fbf037ac6
+		summarizeBy: sum
+		sourceColumn: Outstanding Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Is Finalized'
+		dataType: boolean
+		isNullable: false
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: e9f82364-3be1-4ad3-a7e2-5a3c036c0d6c
+		summarizeBy: none
+		sourceColumn: Is Finalized
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ac3be844-4fc3-4d64-9cb7-e9663e5b29a9
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'finance F_Transaction' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    finance_F_Transaction = Source{[Schema="finance",Item="F_Transaction"]}[Data]
+				in
+				    finance_F_Transaction
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

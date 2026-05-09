@@ -1,0 +1,153 @@
+/// Stock movement fact table for inventory flow and transaction-volume analysis.
+table F_Movement
+	lineageTag: f017a76a-32a5-41b2-ae29-0298f51f8173
+
+	/// Total stock movement quantity.
+	measure 'Movement Quantity' = SUM('F_Movement'[Quantity])
+		formatString: #,0
+		displayFolder: Inventory Movement
+		lineageTag: 3dd4e174-a777-44bb-bbdb-8ab2375ab66a
+
+	/// Distinct stock movement count.
+	measure 'Movement Count' = DISTINCTCOUNT('F_Movement'[Movement Key])
+		formatString: #,0
+		displayFolder: Inventory Movement
+		lineageTag: 846b090b-9447-4c41-99ab-1a98a944e4c9
+
+	column 'Movement Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: c794b1cf-ae3d-439a-892e-f33b2616bb1c
+		summarizeBy: count
+		sourceColumn: Movement Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isNullable: false
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 5709c31a-f97c-4af2-ba2d-3d53e038a1b6
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column D_StockItem_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 0578746f-1ec9-4f26-9d62-ab20d00e7a88
+		summarizeBy: none
+		sourceColumn: D_StockItem_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_Customer_SID
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ac80ae3c-bd3a-40fe-a278-0491c916614b
+		summarizeBy: none
+		sourceColumn: D_Customer_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_Supplier_SID
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: faebc4f7-96e8-473d-9322-581697906c6d
+		summarizeBy: none
+		sourceColumn: D_Supplier_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_TransactionType_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ffe3b1e2-2928-46de-8c08-4ea9efc07120
+		summarizeBy: none
+		sourceColumn: D_TransactionType_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Stock Item Transaction ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 9baf8928-82e9-4289-a329-630e2897cae4
+		summarizeBy: count
+		sourceColumn: WWI Stock Item Transaction ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Invoice ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 3857118f-5a6a-4345-abf1-a0488bc0a0e0
+		summarizeBy: count
+		sourceColumn: WWI Invoice ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Purchase Order ID'
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 53ea331c-5c80-4b7c-9ff7-deabba8558a3
+		summarizeBy: count
+		sourceColumn: WWI Purchase Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quantity
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 5909d370-e90b-44fe-b95f-8bae17add41d
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 5f00b679-463d-436e-85f2-da2ceaea4131
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'delivery F_Movement' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    delivery_F_Movement = Source{[Schema="delivery",Item="F_Movement"]}[Data]
+				in
+				    delivery_F_Movement
+

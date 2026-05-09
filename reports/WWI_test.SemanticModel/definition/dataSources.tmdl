@@ -1,0 +1,4 @@
+dataSource WideWorldImportersDW = provider
+	connectionString: Provider=MSOLEDBSQL;Data Source=localhost;Initial Catalog=WideWorldImportersDW;Integrated Security=SSPI;Persist Security Info=False;Encrypt=True;Trust Server Certificate=True
+	impersonationMode: impersonateServiceAccount
+

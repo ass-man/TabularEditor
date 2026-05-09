@@ -1,0 +1,83 @@
+/// Payment method dimension for transaction and receivables analysis.
+table D_PaymentMethod
+	lineageTag: e0f19d71-cd62-410d-aaf9-44d6851ba373
+
+	column D_PaymentMethod_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 87e7f407-5db5-49ff-b243-3194595ed2c1
+		summarizeBy: none
+		sourceColumn: D_PaymentMethod_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI Payment Method ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: c304eeca-8da3-43a6-bf9e-a5efac81576f
+		summarizeBy: none
+		sourceColumn: WWI Payment Method ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Payment Method'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 51b036da-23b2-4e95-a126-23bc8c8efb42
+		summarizeBy: none
+		sourceColumn: Payment Method
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid From'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 4bc57735-5cf6-47eb-9ac5-f462dd5562d8
+		summarizeBy: none
+		sourceColumn: Valid From
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid To'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 7396d7e2-a54b-4b92-8259-c5a421be1aea
+		summarizeBy: none
+		sourceColumn: Valid To
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 30238ad5-f431-4899-b87d-c7294317c488
+		summarizeBy: none
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_PaymentMethod' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_PaymentMethod = Source{[Schema="common",Item="D_PaymentMethod"]}[Data]
+				in
+				    common_D_PaymentMethod
+

@@ -61,6 +61,39 @@ namespace TabularEditor
             }
         }
 
+        [TestMethod]
+        public void MeasureKillerViewer_JsonParser_ParsesMeasureKillerShape()
+        {
+            var repoRoot = FindRepoRoot();
+            var pluginsRoot = Path.Combine(repoRoot, "TabularEditor", "Plugins");
+            var descriptor = new PluginDescriptor
+            {
+                Id = "measure-killer-viewer",
+                Name = "Measure Killer Output Viewer",
+                MenuPath = "Measure Killer Output Viewer...",
+                SourceType = PluginSourceType.Script,
+                Source = @"MeasureKillerViewer\MeasureKillerViewerPlugin.csx",
+                EntryType = "MeasureKillerViewerPlugin",
+                SingleInstance = true
+            };
+
+            var plugin = new PluginLoader().Load(descriptor, pluginsRoot);
+            var jsonType = plugin.GetType().Assembly.GetType("Json", true);
+            var readObject = jsonType.GetMethod("ReadObject");
+            var result = readObject.Invoke(null, new object[]
+            {
+                @"{""model_name"":""WWI_test"",""tables"":[{""name"":""D_StockItem"",""columns"":[{""name"":""Stock Item"",""is_used"":""Used""}],""measures"":[]}],""relationships"":[]}"
+            });
+
+            Assert.IsNotNull(result, "JSON parser returned null.");
+            var str = jsonType.GetMethod("Str");
+            Assert.AreEqual("WWI_test", str.Invoke(null, new[] { result, "model_name" }));
+            var array = jsonType.GetMethod("Array");
+            var tables = array.Invoke(null, new[] { result, "tables" }) as System.Collections.ArrayList;
+            Assert.IsNotNull(tables, "Tables array did not parse.");
+            Assert.AreEqual(1, tables.Count);
+        }
+
         private static string FindRepoRoot()
         {
             var current = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);

@@ -1,0 +1,169 @@
+/// Canonical calendar and fiscal date dimension for trend, period, and seasonality analysis.
+table D_Date
+	lineageTag: 48aaa246-867e-4ba3-8ff9-c4c9f7d90d23
+
+	column Date
+		dataType: dateTime
+		isNullable: false
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 5d76b445-c98c-46f4-886d-9bd88c5fc5d3
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Day Number'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: b4d99539-8eff-4c20-9658-527ee6fcf965
+		summarizeBy: sum
+		sourceColumn: Day Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Day
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(10)
+		lineageTag: 5bfb03f3-c1ed-46aa-8e97-ba7fb2bec0eb
+		summarizeBy: none
+		sourceColumn: Day
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(10)
+		lineageTag: e8e9b475-90ed-4411-b306-5b6dcad9cc94
+		summarizeBy: none
+		sourceColumn: Month
+		sortByColumn: 'Calendar Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Short Month'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(3)
+		lineageTag: f907ff7e-c3d2-4c1c-bf04-64438b16a1f8
+		summarizeBy: none
+		sourceColumn: Short Month
+		sortByColumn: 'Calendar Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Calendar Month Number'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: c97d19be-d6ce-4c70-a0f0-c67b96dbd9df
+		summarizeBy: sum
+		sourceColumn: Calendar Month Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Calendar Month Label'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(20)
+		lineageTag: e6cdb44e-7633-4431-881b-99e27c8b1a03
+		summarizeBy: none
+		sourceColumn: Calendar Month Label
+		sortByColumn: 'Calendar Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Calendar Year'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: fd9ac3f4-33ab-4897-82f2-2bc0a9a076d1
+		summarizeBy: sum
+		sourceColumn: Calendar Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Calendar Year Label'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(10)
+		lineageTag: 50f067cf-ef57-4d2e-9241-45fe4db72120
+		summarizeBy: none
+		sourceColumn: Calendar Year Label
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Month Number'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 39b6166b-edb5-47db-ac91-8706e1da60ca
+		summarizeBy: sum
+		sourceColumn: Fiscal Month Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Month Label'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(20)
+		lineageTag: 4ee3876d-46ec-435a-9694-f22c51269fee
+		summarizeBy: none
+		sourceColumn: Fiscal Month Label
+		sortByColumn: 'Fiscal Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 7a200b51-7bc5-41b0-912d-7340dd3a3b8e
+		summarizeBy: sum
+		sourceColumn: Fiscal Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year Label'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(10)
+		lineageTag: c379b3cb-ec57-4396-89fa-daf572e9f0f2
+		summarizeBy: none
+		sourceColumn: Fiscal Year Label
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'ISO Week Number'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 9e2eaf94-07aa-4213-9691-14134842925d
+		summarizeBy: sum
+		sourceColumn: ISO Week Number
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_Date' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_Date = Source{[Schema="common",Item="D_Date"]}[Data]
+				in
+				    common_D_Date
+

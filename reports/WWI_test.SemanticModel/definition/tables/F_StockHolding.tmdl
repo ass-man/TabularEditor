@@ -1,0 +1,144 @@
+/// Current stock holding snapshot for inventory value, shortage risk, and overstock analysis.
+table F_StockHolding
+	lineageTag: 510f6742-c497-4cdb-9367-d8d926aa27f1
+
+	/// Current inventory value at last cost price.
+	measure 'Inventory Value' = SUMX('F_StockHolding', 'F_StockHolding'[Quantity On Hand] * 'F_StockHolding'[Last Cost Price])
+		formatString: $#,0;(-$#,0);$#,0
+		displayFolder: Inventory
+		lineageTag: 6f277c41-d74b-4f8e-92dd-11aab4c75f15
+
+	/// Stock items at or below reorder level.
+	measure 'Reorder Risk Items' = COUNTROWS(FILTER('F_StockHolding', 'F_StockHolding'[Quantity On Hand] <= 'F_StockHolding'[Reorder Level]))
+		formatString: #,0
+		displayFolder: Inventory
+		lineageTag: 314e2ab3-b372-4383-aa0a-50f4c64a4fc5
+
+	/// Stock items above target stock level.
+	measure 'Overstock Items' = COUNTROWS(FILTER('F_StockHolding', 'F_StockHolding'[Quantity On Hand] > 'F_StockHolding'[Target Stock Level]))
+		formatString: #,0
+		displayFolder: Inventory
+		lineageTag: 78f141ad-bbbf-4096-8e6f-880a40dab160
+
+	/// Quantity on hand divided by target stock level.
+	measure 'Stock Coverage %' = DIVIDE(SUM('F_StockHolding'[Quantity On Hand]), SUM('F_StockHolding'[Target Stock Level]))
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Inventory
+		lineageTag: 182c4988-3fed-40c2-8473-4b6ac136a903
+
+	measure 'Stock Quantity On Hand' = SUM('F_StockHolding'[Quantity On Hand])
+		formatString: #,0
+		lineageTag: 50381f06-88f6-4ea0-a23a-f9a406379aec
+
+	column 'Stock Holding Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 69f2e3a9-f474-4fa1-84c8-4a23912656cc
+		summarizeBy: count
+		sourceColumn: Stock Holding Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column D_StockItem_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: f23a63b7-c1d0-47eb-a58f-99ca97c408be
+		summarizeBy: none
+		sourceColumn: D_StockItem_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Quantity On Hand'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 576770a7-3a7b-4c9f-a978-2940d5cdc0ba
+		summarizeBy: sum
+		sourceColumn: Quantity On Hand
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Bin Location'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(20)
+		lineageTag: 80550b2c-80d4-455e-a931-cf041d452963
+		summarizeBy: none
+		sourceColumn: Bin Location
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Last Stocktake Quantity'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 498938df-8871-4184-b4c8-c55c4aa91b5a
+		summarizeBy: sum
+		sourceColumn: Last Stocktake Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Last Cost Price'
+		dataType: double
+		isNullable: false
+		formatString: #,0.00
+		sourceProviderType: decimal(18, 2)
+		lineageTag: 1cd987e9-10f8-41df-ab70-9c143a4a823b
+		summarizeBy: sum
+		sourceColumn: Last Cost Price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Reorder Level'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: a8318d57-4a7b-47b4-8e51-56429b24f756
+		summarizeBy: sum
+		sourceColumn: Reorder Level
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Target Stock Level'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 7d41d22c-cc12-4ffe-b826-78186d7bc47f
+		summarizeBy: sum
+		sourceColumn: Target Stock Level
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 32237946-0c3b-49d4-8ed0-80327ade3887
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'delivery F_StockHolding' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    delivery_F_StockHolding = Source{[Schema="delivery",Item="F_StockHolding"]}[Data]
+				in
+				    delivery_F_StockHolding
+

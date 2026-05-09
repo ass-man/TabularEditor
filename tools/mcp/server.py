@@ -6,6 +6,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ LOG = logging.getLogger("tabulareditor-cli-mcp")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MAX_FILE_BYTES = 300_000
 COMMAND_TIMEOUT_SEC = 60
+RUNTIME_DIR = Path(__file__).resolve().parent / ".runtime"
 
 CLI_TERMS = (
     "cli",
@@ -458,6 +460,522 @@ def run_cli_command(command: str, dry_run: bool = True) -> dict[str, Any]:
     return result
 
 
+def inspect_model(target: str) -> dict[str, Any]:
+    script = """
+Output("DatabaseName=" + Model.Database.Name);
+Output("TableCount=" + Model.Tables.Count);
+Output("ColumnCount=" + Model.AllColumns.Count());
+Output("MeasureCount=" + Model.AllMeasures.Count());
+Output("RelationshipCount=" + Model.Relationships.Count);
+Output("DataSourceCount=" + Model.DataSources.Count);
+Output("ExpressionCount=" + Model.Expressions.Count);
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_tables(target: str) -> dict[str, Any]:
+    script = """
+foreach(var table in Model.Tables.OrderBy(t => t.Name))
+{
+    Output("TABLE|" + table.Name + "|Columns=" + table.Columns.Count + "|Measures=" + table.Measures.Count + "|Partitions=" + table.Partitions.Count + "|Hidden=" + table.IsHidden);
+}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_columns(target: str, table: str | None = None) -> dict[str, Any]:
+    table_filter = _cs_string(table) if table else "null"
+    script = f"""
+string tableFilter = {table_filter};
+var tables = tableFilter == null ? Model.Tables : Model.Tables.Where(t => t.Name.Equals(tableFilter, System.StringComparison.OrdinalIgnoreCase));
+foreach(var t in tables.OrderBy(t => t.Name))
+{{
+    foreach(var column in t.Columns.OrderBy(c => c.Name))
+    {{
+        Output("COLUMN|" + t.Name + "|" + column.Name + "|Type=" + column.GetType().Name + "|DataType=" + column.DataType + "|Hidden=" + column.IsHidden);
+    }}
+}}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_measures(target: str, table: str | None = None) -> dict[str, Any]:
+    table_filter = _cs_string(table) if table else "null"
+    script = f"""
+string tableFilter = {table_filter};
+var tables = tableFilter == null ? Model.Tables : Model.Tables.Where(t => t.Name.Equals(tableFilter, System.StringComparison.OrdinalIgnoreCase));
+foreach(var t in tables.OrderBy(t => t.Name))
+{{
+    foreach(var measure in t.Measures.OrderBy(m => m.Name))
+    {{
+        Output("MEASURE|" + t.Name + "|" + measure.Name + "|Hidden=" + measure.IsHidden + "|FormatString=" + (measure.FormatString ?? ""));
+    }}
+}}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_relationships(target: str) -> dict[str, Any]:
+    script = """
+foreach(var rel in Model.Relationships)
+{
+    Output("RELATIONSHIP|" + rel.FromTable.Name + "|" + rel.FromColumn.Name + "|" + rel.ToTable.Name + "|" + rel.ToColumn.Name + "|Active=" + rel.IsActive + "|CrossFiltering=" + rel.CrossFilteringBehavior);
+}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_partitions(target: str, table: str | None = None) -> dict[str, Any]:
+    table_filter = _cs_string(table) if table else "null"
+    script = f"""
+System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public;
+string tableFilter = {table_filter};
+var tables = tableFilter == null ? Model.Tables : Model.Tables.Where(t => t.Name.Equals(tableFilter, System.StringComparison.OrdinalIgnoreCase));
+foreach(var t in tables.OrderBy(t => t.Name))
+{{
+    foreach(var partition in t.Partitions.OrderBy(p => p.Name))
+    {{
+        var metadataProp = partition.GetType().GetProperties(flags).First(p => p.Name == "MetadataObject" && p.PropertyType.FullName == "Microsoft.AnalysisServices.Tabular.Partition");
+        object metadata = metadataProp.GetValue(partition, null);
+        var modeProp = metadata.GetType().GetProperty("Mode", flags);
+        var sourceProp = metadata.GetType().GetProperty("Source", flags);
+        object source = sourceProp == null ? null : sourceProp.GetValue(metadata, null);
+        Output("PARTITION|" + t.Name + "|" + partition.Name + "|Mode=" + (modeProp == null ? "" : (modeProp.GetValue(metadata, null) ?? "").ToString()) + "|SourceType=" + (source == null ? "NULL" : source.GetType().Name));
+    }}
+}}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_data_sources(target: str) -> dict[str, Any]:
+    script = """
+foreach(var dataSource in Model.DataSources.OrderBy(d => d.Name))
+{
+    Output("DATASOURCE|" + dataSource.Name + "|Type=" + dataSource.GetType().Name);
+}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def list_expressions(target: str) -> dict[str, Any]:
+    script = """
+foreach(var expression in Model.Expressions.OrderBy(e => e.Name))
+{
+    Output("EXPRESSION|" + expression.Name + "|Kind=" + expression.Kind + "|Length=" + (expression.Expression == null ? 0 : expression.Expression.Length));
+}
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def find_objects(target: str, query: str) -> dict[str, Any]:
+    script = f"""
+string query = {_cs_string(query)};
+foreach(var table in Model.Tables.Where(t => t.Name.IndexOf(query, System.StringComparison.OrdinalIgnoreCase) >= 0).OrderBy(t => t.Name))
+    Output("TABLE|" + table.Name);
+foreach(var column in Model.AllColumns.Where(c => c.Name.IndexOf(query, System.StringComparison.OrdinalIgnoreCase) >= 0).OrderBy(c => c.Table.Name).ThenBy(c => c.Name))
+    Output("COLUMN|" + column.Table.Name + "|" + column.Name);
+foreach(var measure in Model.AllMeasures.Where(m => m.Name.IndexOf(query, System.StringComparison.OrdinalIgnoreCase) >= 0).OrderBy(m => m.Table.Name).ThenBy(m => m.Name))
+    Output("MEASURE|" + measure.Table.Name + "|" + measure.Name);
+"""
+    return _run_model_script(target, script, save=False, dry_run=False)
+
+
+def hide_columns(target: str, column_names: list[str], table_pattern: str | None = None, dry_run: bool = True) -> dict[str, Any]:
+    _require_non_empty_list(column_names, "column_names")
+    table_filter = _cs_string(table_pattern) if table_pattern else "null"
+    script = f"""
+var names = new System.Collections.Generic.HashSet<string>({_cs_string_array(column_names)}, System.StringComparer.OrdinalIgnoreCase);
+string tablePattern = {table_filter};
+var changed = 0;
+foreach(var table in Model.Tables)
+{{
+    if(tablePattern != null && table.Name.IndexOf(tablePattern, System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+    foreach(var column in table.Columns.Where(c => names.Contains(c.Name)))
+    {{
+        if(!column.IsHidden)
+        {{
+            column.IsHidden = true;
+            changed++;
+            Output("HID_COLUMN|" + table.Name + "|" + column.Name);
+        }}
+    }}
+}}
+Output("SUMMARY|HiddenColumns=" + changed);
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def set_table_hidden(target: str, table_names: list[str], hidden: bool = True, dry_run: bool = True) -> dict[str, Any]:
+    _require_non_empty_list(table_names, "table_names")
+    script = f"""
+var names = new System.Collections.Generic.HashSet<string>({_cs_string_array(table_names)}, System.StringComparer.OrdinalIgnoreCase);
+var changed = 0;
+foreach(var tableName in names)
+{{
+    if(!Model.Tables.Contains(tableName)) Error("Missing table: " + tableName);
+    else
+    {{
+        var table = Model.Tables[tableName];
+        if(table.IsHidden != {_cs_bool(hidden)})
+        {{
+            table.IsHidden = {_cs_bool(hidden)};
+            changed++;
+            Output("SET_TABLE_HIDDEN|" + table.Name + "|Hidden=" + table.IsHidden);
+        }}
+    }}
+}}
+Output("SUMMARY|ChangedTables=" + changed);
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def rename_table(target: str, old_name: str, new_name: str, dry_run: bool = True) -> dict[str, Any]:
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(old_name)})) Error("Missing table: " + {_cs_string(old_name)});
+else if(Model.Tables.Contains({_cs_string(new_name)})) Error("Target table already exists: " + {_cs_string(new_name)});
+else
+{{
+    Model.Tables[{_cs_string(old_name)}].Name = {_cs_string(new_name)};
+    Output("RENAMED_TABLE|" + {_cs_string(old_name)} + "|" + {_cs_string(new_name)});
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def rename_column(target: str, table: str, old_name: str, new_name: str, dry_run: bool = True) -> dict[str, Any]:
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(table)})) Error("Missing table: " + {_cs_string(table)});
+else if(!Model.Tables[{_cs_string(table)}].Columns.Contains({_cs_string(old_name)})) Error("Missing column: " + {_cs_string(table)} + "." + {_cs_string(old_name)});
+else if(Model.Tables[{_cs_string(table)}].Columns.Contains({_cs_string(new_name)})) Error("Target column already exists: " + {_cs_string(table)} + "." + {_cs_string(new_name)});
+else
+{{
+    Model.Tables[{_cs_string(table)}].Columns[{_cs_string(old_name)}].Name = {_cs_string(new_name)};
+    Output("RENAMED_COLUMN|" + {_cs_string(table)} + "|" + {_cs_string(old_name)} + "|" + {_cs_string(new_name)});
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def delete_tables(target: str, table_names: list[str], dry_run: bool = True) -> dict[str, Any]:
+    _require_non_empty_list(table_names, "table_names")
+    script = f"""
+var names = {_cs_string_array(table_names)};
+foreach(var tableName in names)
+{{
+    if(!Model.Tables.Contains(tableName)) Error("Missing table: " + tableName);
+}}
+var deleted = 0;
+foreach(var tableName in names)
+{{
+    if(Model.Tables.Contains(tableName))
+    {{
+        Model.Tables[tableName].Delete();
+        deleted++;
+        Output("DELETED_TABLE|" + tableName);
+    }}
+}}
+Output("SUMMARY|DeletedTables=" + deleted);
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def delete_columns(target: str, table: str, column_names: list[str], dry_run: bool = True) -> dict[str, Any]:
+    _require_non_empty_list(column_names, "column_names")
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(table)})) Error("Missing table: " + {_cs_string(table)});
+else
+{{
+    var names = {_cs_string_array(column_names)};
+    foreach(var columnName in names)
+        if(!Model.Tables[{_cs_string(table)}].Columns.Contains(columnName)) Error("Missing column: " + {_cs_string(table)} + "." + columnName);
+    var deleted = 0;
+    foreach(var columnName in names)
+    {{
+        if(Model.Tables[{_cs_string(table)}].Columns.Contains(columnName))
+        {{
+            Model.Tables[{_cs_string(table)}].Columns[columnName].Delete();
+            deleted++;
+            Output("DELETED_COLUMN|" + {_cs_string(table)} + "|" + columnName);
+        }}
+    }}
+    Output("SUMMARY|DeletedColumns=" + deleted);
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def create_relationship(
+    target: str,
+    from_table: str,
+    from_column: str,
+    to_table: str,
+    to_column: str,
+    active: bool = True,
+    cross_filtering_behavior: str = "OneDirection",
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(from_table)})) Error("Missing from_table: " + {_cs_string(from_table)});
+else if(!Model.Tables[{_cs_string(from_table)}].Columns.Contains({_cs_string(from_column)})) Error("Missing from column: " + {_cs_string(from_table)} + "." + {_cs_string(from_column)});
+else if(!Model.Tables.Contains({_cs_string(to_table)})) Error("Missing to_table: " + {_cs_string(to_table)});
+else if(!Model.Tables[{_cs_string(to_table)}].Columns.Contains({_cs_string(to_column)})) Error("Missing to column: " + {_cs_string(to_table)} + "." + {_cs_string(to_column)});
+else if(Model.Relationships.Any(r => r.FromTable.Name == {_cs_string(from_table)} && r.FromColumn.Name == {_cs_string(from_column)} && r.ToTable.Name == {_cs_string(to_table)} && r.ToColumn.Name == {_cs_string(to_column)}))
+    Error("Relationship already exists.");
+else
+{{
+    var rel = Model.Tables[{_cs_string(from_table)}].Columns[{_cs_string(from_column)}].RelateTo(Model.Tables[{_cs_string(to_table)}].Columns[{_cs_string(to_column)}]);
+    rel.IsActive = {_cs_bool(active)};
+    rel.CrossFilteringBehavior = (CrossFilteringBehavior)System.Enum.Parse(typeof(CrossFilteringBehavior), {_cs_string(cross_filtering_behavior)});
+    Output("CREATED_RELATIONSHIP|" + {_cs_string(from_table)} + "|" + {_cs_string(from_column)} + "|" + {_cs_string(to_table)} + "|" + {_cs_string(to_column)});
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def delete_relationship(
+    target: str,
+    from_table: str,
+    from_column: str,
+    to_table: str,
+    to_column: str,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    script = f"""
+var matches = Model.Relationships.Where(r => r.FromTable.Name == {_cs_string(from_table)} && r.FromColumn.Name == {_cs_string(from_column)} && r.ToTable.Name == {_cs_string(to_table)} && r.ToColumn.Name == {_cs_string(to_column)}).ToList();
+if(matches.Count == 0) Error("Relationship not found.");
+foreach(var rel in matches)
+{{
+    rel.Delete();
+    Output("DELETED_RELATIONSHIP|" + {_cs_string(from_table)} + "|" + {_cs_string(from_column)} + "|" + {_cs_string(to_table)} + "|" + {_cs_string(to_column)});
+}}
+Output("SUMMARY|DeletedRelationships=" + matches.Count);
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def create_measure(
+    target: str,
+    table: str,
+    name: str,
+    expression: str,
+    format_string: str | None = None,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    format_line = f"measure.FormatString = {_cs_string(format_string)};" if format_string is not None else ""
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(table)})) Error("Missing table: " + {_cs_string(table)});
+else if(Model.Tables[{_cs_string(table)}].Measures.Contains({_cs_string(name)})) Error("Measure already exists: " + {_cs_string(table)} + "." + {_cs_string(name)});
+else
+{{
+    var measure = Model.Tables[{_cs_string(table)}].AddMeasure({_cs_string(name)}, {_cs_string(expression)});
+    {format_line}
+    Output("CREATED_MEASURE|" + {_cs_string(table)} + "|" + {_cs_string(name)});
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def update_measure(
+    target: str,
+    table: str,
+    name: str,
+    expression: str | None = None,
+    format_string: str | None = None,
+    hidden: bool | None = None,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    updates: list[str] = []
+    if expression is not None:
+        updates.append(f"measure.Expression = {_cs_string(expression)};")
+    if format_string is not None:
+        updates.append(f"measure.FormatString = {_cs_string(format_string)};")
+    if hidden is not None:
+        updates.append(f"measure.IsHidden = {_cs_bool(hidden)};")
+    if not updates:
+        raise ValueError("At least one of expression, format_string, or hidden must be provided.")
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(table)})) Error("Missing table: " + {_cs_string(table)});
+else if(!Model.Tables[{_cs_string(table)}].Measures.Contains({_cs_string(name)})) Error("Missing measure: " + {_cs_string(table)} + "." + {_cs_string(name)});
+else
+{{
+    var measure = Model.Tables[{_cs_string(table)}].Measures[{_cs_string(name)}];
+    {" ".join(updates)}
+    Output("UPDATED_MEASURE|" + {_cs_string(table)} + "|" + {_cs_string(name)});
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def delete_measures(target: str, table: str, measure_names: list[str], dry_run: bool = True) -> dict[str, Any]:
+    _require_non_empty_list(measure_names, "measure_names")
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(table)})) Error("Missing table: " + {_cs_string(table)});
+else
+{{
+    var names = {_cs_string_array(measure_names)};
+    foreach(var measureName in names)
+        if(!Model.Tables[{_cs_string(table)}].Measures.Contains(measureName)) Error("Missing measure: " + {_cs_string(table)} + "." + measureName);
+    var deleted = 0;
+    foreach(var measureName in names)
+    {{
+        if(Model.Tables[{_cs_string(table)}].Measures.Contains(measureName))
+        {{
+            Model.Tables[{_cs_string(table)}].Measures[measureName].Delete();
+            deleted++;
+            Output("DELETED_MEASURE|" + {_cs_string(table)} + "|" + measureName);
+        }}
+    }}
+    Output("SUMMARY|DeletedMeasures=" + deleted);
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def copy_measures(
+    target: str,
+    source_table: str,
+    target_table: str,
+    measure_names: list[str] | None = None,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    names = _cs_string_array(measure_names) if measure_names else "null"
+    script = f"""
+if(!Model.Tables.Contains({_cs_string(source_table)})) Error("Missing source table: " + {_cs_string(source_table)});
+else if(!Model.Tables.Contains({_cs_string(target_table)})) Error("Missing target table: " + {_cs_string(target_table)});
+else
+{{
+    string[] requested = {names};
+    var source = Model.Tables[{_cs_string(source_table)}];
+    var destination = Model.Tables[{_cs_string(target_table)}];
+    var measures = requested == null ? source.Measures.ToList() : requested.Select(n => source.Measures.Contains(n) ? source.Measures[n] : null).Where(m => m != null).ToList();
+    if(requested != null)
+        foreach(var name in requested)
+            if(!source.Measures.Contains(name)) Error("Missing measure: " + source.Name + "." + name);
+    var copied = 0;
+    foreach(var measure in measures)
+    {{
+        var clone = measure.Clone(measure.Name, true, destination);
+        clone.Expression = measure.Expression;
+        copied++;
+        Output("COPIED_MEASURE|" + source.Name + "|" + destination.Name + "|" + clone.Name);
+    }}
+    Output("SUMMARY|CopiedMeasures=" + copied);
+}}
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
+def replace_tables_with_existing_tables(
+    target: str,
+    mapping: dict[str, str],
+    remove_helper_date_tables: bool = True,
+    copy_old_measures: bool = True,
+    recreate_missing_relationships: bool = True,
+    hide_metadata_columns: bool = True,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    if not mapping:
+        raise ValueError("mapping must contain at least one old-table to new-table pair.")
+    entries = "\n".join(f'pairs.Add({_cs_string(old)}, {_cs_string(new)});' for old, new in mapping.items())
+    script = f"""
+var pairs = new System.Collections.Generic.Dictionary<string,string>(System.StringComparer.OrdinalIgnoreCase);
+{entries}
+foreach(var pair in pairs)
+{{
+    if(!Model.Tables.Contains(pair.Key)) Error("Missing old table: " + pair.Key);
+    if(!Model.Tables.Contains(pair.Value)) Error("Missing replacement table: " + pair.Value);
+}}
+var clonedMeasures = 0;
+if({_cs_bool(copy_old_measures)})
+{{
+    foreach(var pair in pairs)
+    {{
+        var oldTable = Model.Tables[pair.Key];
+        var newTable = Model.Tables[pair.Value];
+        foreach(var measure in oldTable.Measures.ToList())
+        {{
+            var clone = measure.Clone(measure.Name, true, newTable);
+            clone.Expression = measure.Expression;
+            clonedMeasures++;
+            Output("CLONED_MEASURE|" + oldTable.Name + "|" + newTable.Name + "|" + clone.Name);
+        }}
+    }}
+}}
+var recreatedRelationships = 0;
+if({_cs_bool(recreate_missing_relationships)})
+{{
+    foreach(var rel in Model.Relationships.ToList())
+    {{
+        if(pairs.ContainsKey(rel.FromTable.Name) && pairs.ContainsKey(rel.ToTable.Name))
+        {{
+            var newFrom = Model.Tables[pairs[rel.FromTable.Name]];
+            var newTo = Model.Tables[pairs[rel.ToTable.Name]];
+            if(newFrom.Columns.Contains(rel.FromColumn.Name) && newTo.Columns.Contains(rel.ToColumn.Name))
+            {{
+                var exists = Model.Relationships.Any(r => r.FromTable == newFrom && r.ToTable == newTo && r.FromColumn.Name == rel.FromColumn.Name && r.ToColumn.Name == rel.ToColumn.Name);
+                if(!exists)
+                {{
+                    var newRel = SingleColumnRelationship.CreateNew(Model);
+                    newRel.FromColumn = newFrom.Columns[rel.FromColumn.Name];
+                    newRel.ToColumn = newTo.Columns[rel.ToColumn.Name];
+                    newRel.IsActive = rel.IsActive;
+                    newRel.CrossFilteringBehavior = rel.CrossFilteringBehavior;
+                    newRel.JoinOnDateBehavior = rel.JoinOnDateBehavior;
+                    newRel.SecurityFilteringBehavior = rel.SecurityFilteringBehavior;
+                    recreatedRelationships++;
+                    Output("RECREATED_RELATIONSHIP|" + rel.FromTable.Name + "|" + rel.FromColumn.Name + "|" + rel.ToTable.Name + "|" + rel.ToColumn.Name);
+                }}
+            }}
+            else Error("Cannot recreate relationship due to missing column: " + rel.FromTable.Name + "." + rel.FromColumn.Name + " -> " + rel.ToTable.Name + "." + rel.ToColumn.Name);
+        }}
+    }}
+}}
+var deletedOldTables = 0;
+foreach(var pair in pairs.ToList())
+{{
+    Model.Tables[pair.Key].Delete();
+    deletedOldTables++;
+    Output("DELETED_OLD_TABLE|" + pair.Key);
+}}
+var deletedHelperTables = 0;
+if({_cs_bool(remove_helper_date_tables)})
+{{
+    foreach(var table in Model.Tables.Where(t => t.Name.StartsWith("LocalDateTable_") || t.Name.StartsWith("DateTableTemplate_")).ToList())
+    {{
+        table.Delete();
+        deletedHelperTables++;
+        Output("DELETED_HELPER_TABLE|" + table.Name);
+    }}
+}}
+var renamedTables = 0;
+foreach(var pair in pairs.ToList())
+{{
+    var table = Model.Tables[pair.Value];
+    table.Name = pair.Key;
+    renamedTables++;
+    Output("RENAMED_TABLE|" + pair.Value + "|" + pair.Key);
+}}
+var hiddenMetadataColumns = 0;
+if({_cs_bool(hide_metadata_columns)})
+{{
+    var metadataNames = new[] {{ "Valid From", "Valid To", "Lineage Key" }};
+    foreach(var table in Model.Tables)
+    {{
+        foreach(var column in table.Columns.Where(c => metadataNames.Contains(c.Name, System.StringComparer.OrdinalIgnoreCase)))
+        {{
+            if(!column.IsHidden)
+            {{
+                column.IsHidden = true;
+                hiddenMetadataColumns++;
+            }}
+        }}
+    }}
+}}
+Output("SUMMARY|ClonedMeasures=" + clonedMeasures + "|RecreatedRelationships=" + recreatedRelationships + "|DeletedOldTables=" + deletedOldTables + "|DeletedHelperTables=" + deletedHelperTables + "|RenamedTables=" + renamedTables + "|HiddenMetadataColumns=" + hiddenMetadataColumns + "|FinalTables=" + Model.Tables.Count + "|FinalRelationships=" + Model.Relationships.Count);
+"""
+    return _run_model_script(target, script, save=True, dry_run=dry_run)
+
+
 def create_mcp() -> Any:
     try:
         from fastmcp import FastMCP
@@ -472,6 +990,28 @@ def create_mcp() -> Any:
         explain_cli_usage,
         validate_cli_command,
         run_cli_command,
+        inspect_model,
+        list_tables,
+        list_columns,
+        list_measures,
+        list_relationships,
+        list_partitions,
+        list_data_sources,
+        list_expressions,
+        find_objects,
+        hide_columns,
+        set_table_hidden,
+        rename_table,
+        rename_column,
+        delete_tables,
+        delete_columns,
+        create_relationship,
+        delete_relationship,
+        create_measure,
+        update_measure,
+        delete_measures,
+        copy_measures,
+        replace_tables_with_existing_tables,
     ):
         mcp.tool()(tool)
     return mcp
@@ -480,6 +1020,137 @@ def create_mcp() -> Any:
 def main() -> None:
     logging.basicConfig(level=os.environ.get("TE_CLI_MCP_LOG", "WARNING"), stream=sys.stderr)
     create_mcp().run(transport="stdio")
+
+
+def _run_model_script(target: str, script: str, save: bool, dry_run: bool) -> dict[str, Any]:
+    try:
+        target_args = _parse_target_args(target)
+    except ValueError as exc:
+        return {
+            "valid": False,
+            "dry_run": dry_run,
+            "save": save,
+            "command": "",
+            "script": script.strip(),
+            "stdout": "",
+            "stderr": str(exc),
+            "exit_code": None,
+        }
+
+    display_script = "<generated-script.csx>"
+    display_argv = ["TabularEditor.exe", *target_args, "-S", display_script]
+    if save:
+        display_argv.append("-D")
+
+    result: dict[str, Any] = {
+        "valid": True,
+        "dry_run": dry_run,
+        "save": save,
+        "command": _argv_to_display(display_argv),
+        "script": script.strip(),
+        "stdout": "",
+        "stderr": "",
+        "exit_code": None,
+    }
+    if dry_run:
+        result["stdout"] = "Dry run only. Generated script was not executed."
+        return result
+
+    exe = _resolve_entrypoint("TabularEditor.exe")
+    if exe is None or not exe.exists():
+        result["stderr"] = f"TabularEditor.exe was not found at {exe!s}."
+        result["exit_code"] = 127
+        return result
+
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    script_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            suffix=".csx",
+            prefix="te-mcp-",
+            dir=RUNTIME_DIR,
+            delete=False,
+        ) as handle:
+            handle.write(script)
+            script_path = Path(handle.name)
+
+        argv = [str(exe), *target_args, "-S", str(script_path)]
+        if save:
+            argv.append("-D")
+        completed = subprocess.run(
+            argv,
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT_SEC,
+            shell=False,
+        )
+        result["command"] = _argv_to_display([str(exe), *target_args, "-S", str(script_path), *(["-D"] if save else [])])
+        result["stdout"] = completed.stdout
+        result["stderr"] = completed.stderr
+        result["exit_code"] = completed.returncode
+        return result
+    except subprocess.TimeoutExpired as exc:
+        result["stdout"] = exc.stdout or ""
+        result["stderr"] = (exc.stderr or "") + f"\nTimed out after {COMMAND_TIMEOUT_SEC} seconds."
+        result["exit_code"] = 124
+        return result
+    except OSError as exc:
+        result["stderr"] = str(exc)
+        result["exit_code"] = 126
+        return result
+    finally:
+        if script_path is not None:
+            try:
+                script_path.unlink(missing_ok=True)
+            except OSError as exc:
+                LOG.warning("Unable to delete runtime script %s: %s", script_path, exc)
+
+
+def _parse_target_args(target: str) -> list[str]:
+    if not target or not target.strip():
+        raise ValueError("target is empty. Use a model file/folder, 'server database', or '-L [name]'.")
+    unsafe = _find_unsafe_shell_syntax(target)
+    if unsafe:
+        raise ValueError(f"Rejected shell syntax in target: {unsafe}.")
+    args = _parse_command(target)
+    if not args:
+        raise ValueError("target is empty after parsing.")
+    allowed_target_switches = {"-L", "-LOCAL"}
+    for index, arg in enumerate(args):
+        if _looks_like_switch(arg) and arg.upper() not in allowed_target_switches:
+            raise ValueError(f"Target must not include CLI operation switches: {arg}")
+        if arg.upper() in allowed_target_switches and index != 0:
+            raise ValueError("-L/-LOCAL is only valid as the first target token.")
+    path_warning = _path_safety_warning(args)
+    if path_warning:
+        raise ValueError(path_warning)
+    return args
+
+
+def _require_non_empty_list(values: list[str], name: str) -> None:
+    if not values:
+        raise ValueError(f"{name} must contain at least one value.")
+    if any(not value or not value.strip() for value in values):
+        raise ValueError(f"{name} must not contain empty values.")
+
+
+def _cs_bool(value: bool) -> str:
+    return "true" if value else "false"
+
+
+def _cs_string(value: str) -> str:
+    import json
+
+    return json.dumps(value)
+
+
+def _cs_string_array(values: list[str] | None) -> str:
+    if values is None:
+        return "null"
+    return "new[] { " + ", ".join(_cs_string(value) for value in values) + " }"
 
 
 def _looks_like_cli_example(text: str) -> bool:

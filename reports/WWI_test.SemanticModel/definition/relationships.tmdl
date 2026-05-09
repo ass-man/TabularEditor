@@ -1,0 +1,175 @@
+relationship 319e1640-1708-44c5-a39c-bcbad3f6dbf4
+	fromColumn: F_Movement.D_Customer_SID
+	toColumn: D_Customer.D_Customer_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 4db1c139-a22e-44f2-a622-c92ace33e3d8
+	fromColumn: F_Movement.Date
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship 32ad23e6-d864-46c4-aa4a-e4f1a79b2ebd
+	fromColumn: F_Movement.D_StockItem_SID
+	toColumn: D_StockItem.D_StockItem_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 1b752cce-1e97-459a-886c-a35c13788276
+	fromColumn: F_Movement.D_TransactionType_SID
+	toColumn: D_TransactionType.D_TransactionType_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 3bdb4da9-b677-4e72-b3f0-691ab1a66a4f
+	fromColumn: F_Movement.D_Supplier_SID
+	toColumn: D_Supplier.D_Supplier_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 9f80ab95-06c7-4e0a-b6e2-fa4de963cb8a
+	fromColumn: F_Purchase.Date
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship 20f53cea-7253-4203-bbc4-8a930cf39c78
+	fromColumn: F_Purchase.D_StockItem_SID
+	toColumn: D_StockItem.D_StockItem_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 120ee501-cb18-484a-aa23-5c8e576af5db
+	fromColumn: F_Purchase.D_Supplier_SID
+	toColumn: D_Supplier.D_Supplier_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship ac1a4328-4db3-4971-8ded-e901358aa420
+	fromColumn: F_StockHolding.D_StockItem_SID
+	toColumn: D_StockItem.D_StockItem_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 51436508-ae28-4761-9492-bdbe56bb8bdf
+	fromColumn: F_Order.D_Customer_SID
+	toColumn: D_Customer.D_Customer_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship d5341a87-bc35-48e1-9413-f42f1add29bd
+	fromColumn: F_Order.'Order Date'
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship ff29227e-addf-44f9-8d24-e2f9cce59898
+	isActive: false
+	fromColumn: F_Order.'Picked Date'
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship 4672dcdc-c104-4ac5-aacf-99b9ad1c0bb4
+	fromColumn: F_Order.Picker_D_Employee_SID
+	toColumn: D_Employee.D_Employee_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship ab1d22ec-4d4e-4dd1-94e0-a76365d8bf31
+	isActive: false
+	fromColumn: F_Order.Salesperson_D_Employee_SID
+	toColumn: D_Employee.D_Employee_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 41d06aab-3573-4ded-991a-53fffdbad2f9
+	fromColumn: F_Order.D_StockItem_SID
+	toColumn: D_StockItem.D_StockItem_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship a49870c4-0bc6-448c-addd-029680872955
+	fromColumn: F_Sale.BillTo_D_Customer_SID
+	toColumn: D_Customer.D_Customer_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship ff2f7ed2-49cb-417a-bac2-4d8b6f091652
+	isActive: false
+	fromColumn: F_Sale.D_Customer_SID
+	toColumn: D_Customer.D_Customer_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 45f36df9-4c95-4153-8e18-055515a40d36
+	fromColumn: F_Sale.'Delivery Date'
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship 2ff23e60-570a-4751-8779-2ee081b23b40
+	isActive: false
+	fromColumn: F_Sale.'Invoice Date'
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship 95fa8bca-148c-4b9e-a137-34534cc0049c
+	fromColumn: F_Sale.D_Employee_SID
+	toColumn: D_Employee.D_Employee_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 22baefe0-04b9-4b37-90fc-b367721ee105
+	fromColumn: F_Sale.D_StockItem_SID
+	toColumn: D_StockItem.D_StockItem_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 14139a9d-4544-43a1-b892-9ed21a037d0c
+	fromColumn: F_Transaction.BillTo_D_Customer_SID
+	toColumn: D_Customer.D_Customer_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 42268ab3-d75e-4a24-b215-91e1d819d65e
+	isActive: false
+	fromColumn: F_Transaction.D_Customer_SID
+	toColumn: D_Customer.D_Customer_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 51652468-6bdb-4886-a481-538b6bfd899f
+	fromColumn: F_Transaction.Date
+	toColumn: D_Date.Date
+
+	annotation PBI_IsFromSource = FS
+
+relationship cef10eeb-a45d-407b-8485-db8d61e9509b
+	fromColumn: F_Transaction.D_PaymentMethod_SID
+	toColumn: D_PaymentMethod.D_PaymentMethod_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship b4ea34dd-b4e8-456d-9cfa-cc352bcadfe7
+	fromColumn: F_Transaction.D_TransactionType_SID
+	toColumn: D_TransactionType.D_TransactionType_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 091d2bd0-e281-4283-b2fd-0cc7b2af58b5
+	fromColumn: F_Transaction.D_Supplier_SID
+	toColumn: D_Supplier.D_Supplier_SID
+
+	annotation PBI_IsFromSource = FS
+
+relationship 3caadbf9-c8e9-40ab-8d9e-7c4d2fa85641
+	fromColumn: F_Order.D_City_SID
+	toColumn: D_City.D_City_SID
+
+relationship 828138b9-1f45-4e45-bc6b-ee377d0cf87d
+	fromColumn: F_Sale.D_City_SID
+	toColumn: D_City.D_City_SID
+

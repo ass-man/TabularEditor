@@ -1,1 +1,3 @@
-& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" TabularEditor.sln /t:Build /p:Configuration=Debug /m
+& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" TabularEditor.sln `
+    /t:Build `
+    /p:Configuration=Debug;OutDir=Publish\;WarningLevel=0

@@ -4,10 +4,193 @@
     {
       "ordinal": 0,
       "scrollPosition": {
-        "x": 0,
-        "y": 0
+        "x": 3002,
+        "y": 809
       },
-      "nodes": [],
+      "nodes": [
+        {
+          "location": {
+            "x": 4222.8079114659868,
+            "y": 821.9921183294191
+          },
+          "nodeIndex": "D_City",
+          "nodeLineageTag": "1dba3e11-3580-4cad-bca9-bf221ab22bb1",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3500.0915534921719,
+            "y": 1154.6367961864739
+          },
+          "nodeIndex": "D_Customer",
+          "nodeLineageTag": "9c167730-5b08-461d-8b96-b8b578dba65b",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2846.5977215869966,
+            "y": 312.68878542969071
+          },
+          "nodeIndex": "D_Date",
+          "nodeLineageTag": "48aaa246-867e-4ba3-8ff9-c4c9f7d90d23",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3889.3571618391306,
+            "y": 898.95355188515032
+          },
+          "nodeIndex": "D_Employee",
+          "nodeLineageTag": "a6fa2eaf-a2ed-4491-8d3c-580f796b67b8",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2370.3883082576067,
+            "y": 322.89142281632496
+          },
+          "nodeIndex": "D_PaymentMethod",
+          "nodeLineageTag": "e0f19d71-cd62-410d-aaf9-44d6851ba373",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3702.0620962329408,
+            "y": 312.96647604737507
+          },
+          "nodeIndex": "D_StockItem",
+          "nodeLineageTag": "8eeaf065-2cfd-4d51-95ec-051f3c52e649",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2559.9714760302586,
+            "y": 600.27324407793583
+          },
+          "nodeIndex": "D_Supplier",
+          "nodeLineageTag": "6043afb6-cf87-48ea-ae92-575160d2150d",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3427.9933998978681,
+            "y": 36.267889558974161
+          },
+          "nodeIndex": "D_TransactionType",
+          "nodeLineageTag": "e3163bd1-311c-499e-81c5-0a627a8d601b",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3417.188509314331,
+            "y": 451.13537956966695
+          },
+          "nodeIndex": "F_Movement",
+          "nodeLineageTag": "f017a76a-32a5-41b2-ae29-0298f51f8173",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3602.7118599158507,
+            "y": 804.2138569897495
+          },
+          "nodeIndex": "F_Order",
+          "nodeLineageTag": "793bfdfa-3cba-489c-a2aa-2205997714dc",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2929.1758262542758,
+            "y": 1130.000941180348
+          },
+          "nodeIndex": "F_Purchase",
+          "nodeLineageTag": "980f6870-b13a-4ff0-abbf-f3f61fa793ac",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3214.8481546012581,
+            "y": 1057.6439216975514
+          },
+          "nodeIndex": "F_Sale",
+          "nodeLineageTag": "6a1895aa-a5d1-400c-84f3-c24195cfcfe5",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3988.8079114659872,
+            "y": 316.88458545492642
+          },
+          "nodeIndex": "F_StockHolding",
+          "nodeLineageTag": "510f6742-c497-4cdb-9367-d8d926aa27f1",
+          "size": {
+            "height": 296,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3130.8125524065881,
+            "y": 451.13618662672081
+          },
+          "nodeIndex": "F_Transaction",
+          "nodeLineageTag": "9363cb38-687f-4a49-9dcf-1ca4daa38b01",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
       "name": "All tables",
       "zoomValue": 100,
       "pinKeyFieldsToTop": false,

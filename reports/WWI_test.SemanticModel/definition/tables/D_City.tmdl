@@ -1,0 +1,167 @@
+/// Geography attributes for country, region, city, and sales-territory reporting.
+table D_City
+	lineageTag: 1dba3e11-3580-4cad-bca9-bf221ab22bb1
+
+	column D_City_SID
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ff552ae8-90b3-4c4c-be6e-2b35b2493de7
+		summarizeBy: count
+		sourceColumn: D_City_SID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WWI City ID'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 57c12e28-705c-4eb0-bc85-898a373388d5
+		summarizeBy: count
+		sourceColumn: WWI City ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column City
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 93eea24c-3fd2-457e-913c-1eeb092af81b
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'State Province'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 03002ead-7a3e-4171-aff2-875d92012f79
+		summarizeBy: none
+		sourceColumn: State Province
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(60)
+		lineageTag: 919f9542-6554-48c1-96c8-650a76b66f5d
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column Continent
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(30)
+		lineageTag: 07251465-e7ee-464c-b906-d015cf2dcc20
+		summarizeBy: none
+		sourceColumn: Continent
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Sales Territory'
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(50)
+		lineageTag: 06ed33c3-5a9f-4396-87a0-fb197f00133e
+		summarizeBy: none
+		sourceColumn: Sales Territory
+
+		annotation SummarizationSetBy = Automatic
+
+	column Region
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(30)
+		lineageTag: 328fc737-e747-4a14-9e7c-9b72016f6f46
+		summarizeBy: none
+		sourceColumn: Region
+
+		annotation SummarizationSetBy = Automatic
+
+	column Subregion
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(30)
+		lineageTag: abcccd3f-c08c-4452-ac6b-2d388db427c4
+		summarizeBy: none
+		sourceColumn: Subregion
+
+		annotation SummarizationSetBy = Automatic
+
+	column Location
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: f939e6e7-b167-4930-8f8e-df3ec2f8e5bf
+		summarizeBy: none
+		sourceColumn: Location
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Latest Recorded Population'
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 4fb2576f-43c0-4306-8cb5-3c777aba6426
+		summarizeBy: sum
+		sourceColumn: Latest Recorded Population
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid From'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 5bf5cbc0-6f46-45cd-af78-bb7ebbe2380c
+		summarizeBy: none
+		sourceColumn: Valid From
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Valid To'
+		dataType: dateTime
+		isHidden
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 71a9d1d8-f7df-4132-b667-a49e29f024af
+		summarizeBy: none
+		sourceColumn: Valid To
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lineage Key'
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e44596df-8ceb-49b7-86f0-0752ebfe9cb9
+		summarizeBy: count
+		sourceColumn: Lineage Key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'common D_City' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("localhost", "WideWorldImportersDW"),
+				    common_D_City = Source{[Schema="common",Item="D_City"]}[Data]
+				in
+				    common_D_City
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

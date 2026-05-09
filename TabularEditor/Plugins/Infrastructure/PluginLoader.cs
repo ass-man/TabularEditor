@@ -1,8 +1,10 @@
 using Microsoft.CSharp;
 using System;
 using System.CodeDom.Compiler;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Dynamic;
 using System.Reflection;
 using TabularEditor.TOMWrapper;
 
@@ -70,9 +72,18 @@ namespace TabularEditor.Plugins.Infrastructure
             AddReferenceIfResolvable(compilerParameters, Assembly.GetAssembly(typeof(PluginHostContext))?.Location);
 
             // Best-effort references for common runtime dependencies:
-            AddReferenceIfResolvable(compilerParameters, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TOMWrapper.dll"));
-            AddReferenceIfResolvable(compilerParameters, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TabularEditor.exe"));
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var configuration = new DirectoryInfo(baseDir.TrimEnd(Path.DirectorySeparatorChar)).Name;
 
+            AddReferenceIfResolvable(
+                compilerParameters,
+                Path.Combine(baseDir, "TabularEditor.exe"));
+
+            AddReferenceIfResolvable(
+                compilerParameters,
+                Path.GetFullPath(Path.Combine(
+                    baseDir,
+                    @"..\..\..\TOMWrapper\bin\" + configuration + @"\TOMWrapper.dll")));
             var source = string.Join(Environment.NewLine, new[]
             {
                 "using System;",
