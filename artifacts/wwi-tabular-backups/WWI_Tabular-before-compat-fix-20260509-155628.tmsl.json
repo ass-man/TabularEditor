@@ -1,0 +1,565 @@
+﻿{
+  "createOrReplace": {
+    "object": {
+      "database": "WWI_Tabular"
+    },
+    "database": {
+      "name": "WWI_Tabular",
+      "compatibilityLevel": 1605,
+      "model": {
+        "description": "Tabular model over WideWorldImportersDW renamed conformed schemas.",
+        "culture": "en-US",
+        "dataSources": [
+          {
+            "name": "SQL_WWI_DW",
+            "connectionString": "Provider=MSOLEDBSQL;Data Source=localhost;Initial Catalog=WideWorldImportersDW;Integrated Security=SSPI;Persist Security Info=False;Encrypt=True;Trust Server Certificate=True",
+            "impersonationMode": "impersonateServiceAccount"
+          }
+        ],
+        "tables": [
+          {
+            "name": "D_Date",
+            "description": "Calendar conformed dimension. WWI uses [Date] as the dimensional key.",
+            "columns": [
+              {
+                "name": "Date",
+                "dataType": "dateTime",
+                "sourceColumn": "Date"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_Date"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_Customer",
+            "description": "Customer, buying group, category context.",
+            "columns": [
+              {
+                "name": "D_Customer_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_Customer_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_Customer"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_City",
+            "description": "Geography hierarchy: city/state/country/sales territory.",
+            "columns": [
+              {
+                "name": "D_City_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_City_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_City"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_Employee",
+            "description": "Salesperson and employee attributes.",
+            "columns": [
+              {
+                "name": "D_Employee_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_Employee_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_Employee"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_StockItem",
+            "description": "Product catalog and package dimensions.",
+            "columns": [
+              {
+                "name": "D_StockItem_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_StockItem_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_StockItem"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_Supplier",
+            "description": "Supplier attributes for procurement analysis.",
+            "columns": [
+              {
+                "name": "D_Supplier_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_Supplier_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_Supplier"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_PaymentMethod",
+            "description": "Conformed payment type classification shared across domains.",
+            "columns": [
+              {
+                "name": "D_PaymentMethod_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_PaymentMethod_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_PaymentMethod"
+                }
+              }
+            ]
+          },
+          {
+            "name": "D_TransactionType",
+            "description": "Conformed transaction classification shared across domains.",
+            "columns": [
+              {
+                "name": "D_TransactionType_SID",
+                "dataType": "int64",
+                "sourceColumn": "D_TransactionType_SID"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM common.D_TransactionType"
+                }
+              }
+            ]
+          },
+          {
+            "name": "F_Sale",
+            "description": "Sales fact at invoice line grain.",
+            "columns": [
+              {
+                "name": "Sale Key",
+                "dataType": "int64",
+                "sourceColumn": "Sale Key"
+              },
+              {
+                "name": "Invoice Date Key",
+                "dataType": "dateTime",
+                "sourceColumn": "Invoice Date Key"
+              },
+              {
+                "name": "Customer Key",
+                "dataType": "int64",
+                "sourceColumn": "Customer Key"
+              },
+              {
+                "name": "City Key",
+                "dataType": "int64",
+                "sourceColumn": "City Key"
+              },
+              {
+                "name": "Stock Item Key",
+                "dataType": "int64",
+                "sourceColumn": "Stock Item Key"
+              },
+              {
+                "name": "Salesperson Key",
+                "dataType": "int64",
+                "sourceColumn": "Salesperson Key"
+              },
+              {
+                "name": "Total Excluding Tax",
+                "dataType": "decimal",
+                "sourceColumn": "Total Excluding Tax"
+              },
+              {
+                "name": "Tax Amount",
+                "dataType": "decimal",
+                "sourceColumn": "Tax Amount"
+              },
+              {
+                "name": "Profit",
+                "dataType": "decimal",
+                "sourceColumn": "Profit"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM finance.F_Sale"
+                }
+              }
+            ],
+            "measures": [
+              {
+                "name": "Sales Amount",
+                "expression": "SUM(F_Sale[Total Excluding Tax])"
+              },
+              {
+                "name": "Sales Tax",
+                "expression": "SUM(F_Sale[Tax Amount])"
+              },
+              {
+                "name": "Gross Profit",
+                "expression": "SUM(F_Sale[Profit])"
+              }
+            ]
+          },
+          {
+            "name": "F_Order",
+            "description": "Order fact for booked demand analysis.",
+            "columns": [
+              {
+                "name": "Order Key",
+                "dataType": "int64",
+                "sourceColumn": "Order Key"
+              },
+              {
+                "name": "Order Date Key",
+                "dataType": "dateTime",
+                "sourceColumn": "Order Date Key"
+              },
+              {
+                "name": "Quantity",
+                "dataType": "int64",
+                "sourceColumn": "Quantity"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM finance.F_Order"
+                }
+              }
+            ],
+            "measures": [
+              {
+                "name": "Order Qty",
+                "expression": "SUM(F_Order[Quantity])"
+              }
+            ]
+          },
+          {
+            "name": "F_Purchase",
+            "description": "Procurement operations fact for ordered and received quantities.",
+            "columns": [
+              {
+                "name": "Purchase Key",
+                "dataType": "int64",
+                "sourceColumn": "Purchase Key"
+              },
+              {
+                "name": "Supplier Key",
+                "dataType": "int64",
+                "sourceColumn": "Supplier Key"
+              },
+              {
+                "name": "Ordered Quantity",
+                "dataType": "int64",
+                "sourceColumn": "Ordered Quantity"
+              },
+              {
+                "name": "Received Outers",
+                "dataType": "int64",
+                "sourceColumn": "Received Outers"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM delivery.F_Purchase"
+                }
+              }
+            ],
+            "measures": [
+              {
+                "name": "Ordered Qty",
+                "expression": "SUM(F_Purchase[Ordered Quantity])"
+              },
+              {
+                "name": "Received Outers Qty",
+                "expression": "SUM(F_Purchase[Received Outers])"
+              }
+            ]
+          },
+          {
+            "name": "F_StockHolding",
+            "description": "Inventory position snapshots.",
+            "columns": [
+              {
+                "name": "Stock Holding Key",
+                "dataType": "int64",
+                "sourceColumn": "Stock Holding Key"
+              },
+              {
+                "name": "Quantity On Hand",
+                "dataType": "int64",
+                "sourceColumn": "Quantity On Hand"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM delivery.F_StockHolding"
+                }
+              }
+            ],
+            "measures": [
+              {
+                "name": "On Hand Qty",
+                "expression": "SUM(F_StockHolding[Quantity On Hand])"
+              }
+            ]
+          },
+          {
+            "name": "F_Movement",
+            "description": "Stock movements in and out.",
+            "columns": [
+              {
+                "name": "Movement Key",
+                "dataType": "int64",
+                "sourceColumn": "Movement Key"
+              },
+              {
+                "name": "Date Key",
+                "dataType": "dateTime",
+                "sourceColumn": "Date Key"
+              },
+              {
+                "name": "Quantity",
+                "dataType": "int64",
+                "sourceColumn": "Quantity"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM delivery.F_Movement"
+                }
+              }
+            ],
+            "measures": [
+              {
+                "name": "Movement Qty",
+                "expression": "SUM(F_Movement[Quantity])"
+              }
+            ]
+          },
+          {
+            "name": "F_Transaction",
+            "description": "Financial transactions including tax and outstanding balances.",
+            "columns": [
+              {
+                "name": "Transaction Key",
+                "dataType": "int64",
+                "sourceColumn": "Transaction Key"
+              },
+              {
+                "name": "Date Key",
+                "dataType": "dateTime",
+                "sourceColumn": "Date Key"
+              },
+              {
+                "name": "Transaction Type Key",
+                "dataType": "int64",
+                "sourceColumn": "Transaction Type Key"
+              },
+              {
+                "name": "Total Excluding Tax",
+                "dataType": "decimal",
+                "sourceColumn": "Total Excluding Tax"
+              },
+              {
+                "name": "Tax Amount",
+                "dataType": "decimal",
+                "sourceColumn": "Tax Amount"
+              },
+              {
+                "name": "Outstanding Balance",
+                "dataType": "decimal",
+                "sourceColumn": "Outstanding Balance"
+              }
+            ],
+            "partitions": [
+              {
+                "name": "pFull",
+                "mode": "import",
+                "source": {
+                  "type": "query",
+                  "dataSource": "SQL_WWI_DW",
+                  "query": "SELECT * FROM finance.F_Transaction"
+                }
+              }
+            ],
+            "measures": [
+              {
+                "name": "Transaction Amount",
+                "expression": "SUM(F_Transaction[Total Excluding Tax])"
+              },
+              {
+                "name": "Transaction Tax",
+                "expression": "SUM(F_Transaction[Tax Amount])"
+              },
+              {
+                "name": "Outstanding Balance Amt",
+                "expression": "SUM(F_Transaction[Outstanding Balance])"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "name": "Sale_Date",
+            "toTable": "D_Date",
+            "toColumn": "Date",
+            "fromTable": "F_Sale",
+            "fromColumn": "Invoice Date Key"
+          },
+          {
+            "name": "Sale_Customer",
+            "toTable": "D_Customer",
+            "toColumn": "D_Customer_SID",
+            "fromTable": "F_Sale",
+            "fromColumn": "Customer Key"
+          },
+          {
+            "name": "Sale_City",
+            "toTable": "D_City",
+            "toColumn": "D_City_SID",
+            "fromTable": "F_Sale",
+            "fromColumn": "City Key"
+          },
+          {
+            "name": "Sale_StockItem",
+            "toTable": "D_StockItem",
+            "toColumn": "D_StockItem_SID",
+            "fromTable": "F_Sale",
+            "fromColumn": "Stock Item Key"
+          },
+          {
+            "name": "Sale_Employee",
+            "toTable": "D_Employee",
+            "toColumn": "D_Employee_SID",
+            "fromTable": "F_Sale",
+            "fromColumn": "Salesperson Key"
+          },
+          {
+            "name": "Purchase_Supplier",
+            "toTable": "D_Supplier",
+            "toColumn": "D_Supplier_SID",
+            "fromTable": "F_Purchase",
+            "fromColumn": "Supplier Key"
+          },
+          {
+            "name": "Order_Date",
+            "toTable": "D_Date",
+            "toColumn": "Date",
+            "fromTable": "F_Order",
+            "fromColumn": "Order Date Key"
+          },
+          {
+            "name": "Movement_Date",
+            "toTable": "D_Date",
+            "toColumn": "Date",
+            "fromTable": "F_Movement",
+            "fromColumn": "Date Key"
+          },
+          {
+            "name": "Transaction_Date",
+            "toTable": "D_Date",
+            "toColumn": "Date",
+            "fromTable": "F_Transaction",
+            "fromColumn": "Date Key"
+          },
+          {
+            "name": "Transaction_Type",
+            "toTable": "D_TransactionType",
+            "toColumn": "D_TransactionType_SID",
+            "fromTable": "F_Transaction",
+            "fromColumn": "Transaction Type Key"
+          }
+        ]
+      }
+    }
+  }
+}

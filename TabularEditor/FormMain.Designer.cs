@@ -47,6 +47,7 @@ namespace TabularEditor
             this.actOpenFile = new Crad.Windows.Forms.Actions.Action();
             this.actOpenDB = new Crad.Windows.Forms.Actions.Action();
             this.actSave = new TabularEditor.UI.UIModelAction();
+            this.actRefreshFromServer = new TabularEditor.UI.UIModelAction();
             this.actSaveAs = new TabularEditor.UI.UIModelAction();
             this.actSaveToFolder = new TabularEditor.UI.UIModelAction();
             this.actExit = new Crad.Windows.Forms.Actions.Action();
@@ -93,6 +94,7 @@ namespace TabularEditor
             this.tbShowHierarchies = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.btnSave = new System.Windows.Forms.ToolStripButton();
+            this.btnRefreshFromServer = new System.Windows.Forms.ToolStripButton();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.undoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -294,6 +296,7 @@ namespace TabularEditor
             actionsMain.Actions.Add(this.actOpenFile);
             actionsMain.Actions.Add(this.actOpenDB);
             actionsMain.Actions.Add(this.actSave);
+            actionsMain.Actions.Add(this.actRefreshFromServer);
             actionsMain.Actions.Add(this.actSaveAs);
             actionsMain.Actions.Add(this.actSaveToFolder);
             actionsMain.Actions.Add(this.actExit);
@@ -496,6 +499,14 @@ namespace TabularEditor
             this.actSave.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.actSave.Text = "&Save .bim file";
             this.actSave.Execute += new System.EventHandler(this.actSave_Execute);
+            // 
+            // actRefreshFromServer
+            // 
+            this.actRefreshFromServer.Image = global::TabularEditor.Resources.Refresh_16x;
+            this.actRefreshFromServer.Text = "&Refresh model from server";
+            this.actRefreshFromServer.ToolTipText = "Refresh model from connected server";
+            this.actRefreshFromServer.UpdateEx += new System.EventHandler<TabularEditor.UI.UpdateExEventArgs>(this.actRefreshFromServer_UpdateEx);
+            this.actRefreshFromServer.Execute += new System.EventHandler(this.actRefreshFromServer_Execute);
             // 
             // actSaveAs
             // 
@@ -906,6 +917,18 @@ namespace TabularEditor
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(23, 22);
             this.btnSave.Text = "&Save .bim file";
+            // 
+            // btnRefreshFromServer
+            // 
+            actionsMain.SetAction(this.btnRefreshFromServer, this.actRefreshFromServer);
+            this.btnRefreshFromServer.AutoToolTip = false;
+            this.btnRefreshFromServer.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnRefreshFromServer.Image = global::TabularEditor.Resources.Refresh_16x;
+            this.btnRefreshFromServer.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnRefreshFromServer.Name = "btnRefreshFromServer";
+            this.btnRefreshFromServer.Size = new System.Drawing.Size(23, 22);
+            this.btnRefreshFromServer.Text = "&Refresh model from server";
+            this.btnRefreshFromServer.ToolTipText = "Refresh model from connected server";
             // 
             // saveToolStripMenuItem
             // 
@@ -1637,6 +1660,7 @@ namespace TabularEditor
             this.btnConnect,
             this.toolStripSeparator3,
             this.btnSave,
+            this.btnRefreshFromServer,
             this.toolStripSeparator22,
             this.toolStripLabel1,
             this.cmbPerspective,
@@ -2701,6 +2725,7 @@ namespace TabularEditor
         #endregion
         private System.Windows.Forms.ToolStrip toolStrip2;
         private System.Windows.Forms.ToolStripButton btnSave;
+        private System.Windows.Forms.ToolStripButton btnRefreshFromServer;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton btnConnect;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
@@ -2865,6 +2890,7 @@ namespace TabularEditor
         private System.Windows.Forms.ToolStripLabel toolStripLabel3;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator19;
         public UI.UIModelAction actSave;
+        private UI.UIModelAction actRefreshFromServer;
         private System.Windows.Forms.OpenFileDialog ofdScript;
         private System.Windows.Forms.SaveFileDialog sfdScript;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator20;

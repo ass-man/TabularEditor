@@ -1,0 +1,1430 @@
+﻿{
+    "createOrReplace":  {
+                            "object":  {
+                                           "database":  "WWI_Tabular"
+                                       },
+                            "database":  {
+                                             "name":  "WWI_Tabular",
+                                             "compatibilityLevel":  1600,
+                                             "model":  {
+                                                           "culture":  "en-US",
+                                                           "dataSources":  [
+                                                                               {
+                                                                                   "name":  "WideWorldImportersDW",
+                                                                                   "type":  "provider",
+                                                                                   "connectionString":  "Provider=MSOLEDBSQL;Data Source=localhost;Initial Catalog=WideWorldImportersDW;Integrated Security=SSPI;Persist Security Info=False;Encrypt=True;Trust Server Certificate=True",
+                                                                                   "impersonationMode":  "impersonateServiceAccount"
+                                                                               }
+                                                                           ],
+                                                           "tables":  [
+                                                                          {
+                                                                              "name":  "D_City",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_City_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_City_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI City ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI City ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "City",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "City"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "State Province",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "State Province"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Country",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Country"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Continent",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Continent"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Sales Territory",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Sales Territory"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Region",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Region"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Subregion",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Subregion"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Latest Recorded Population",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Latest Recorded Population"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_City",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_City_SID], [WWI City ID], [City], [State Province], [Country], [Continent], [Sales Territory], [Region], [Subregion], [Latest Recorded Population], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_City]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_Customer",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Customer ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Customer ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Customer",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Customer"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Bill To Customer",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Bill To Customer"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Category",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Category"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Buying Group",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Buying Group"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Primary Contact",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Primary Contact"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Postal Code",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Postal Code"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_Customer",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_Customer_SID], [WWI Customer ID], [Customer], [Bill To Customer], [Category], [Buying Group], [Primary Contact], [Postal Code], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_Customer]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_Date",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Day Number",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Day Number"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Day",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Day"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Month",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Month"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Short Month",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Short Month"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Calendar Month Number",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Calendar Month Number"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Calendar Month Label",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Calendar Month Label"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Calendar Year",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Calendar Year"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Calendar Year Label",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Calendar Year Label"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Fiscal Month Number",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Fiscal Month Number"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Fiscal Month Label",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Fiscal Month Label"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Fiscal Year",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Fiscal Year"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Fiscal Year Label",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Fiscal Year Label"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "ISO Week Number",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "ISO Week Number"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_Date",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Date], [Day Number], [Day], [Month], [Short Month], [Calendar Month Number], [Calendar Month Label], [Calendar Year], [Calendar Year Label], [Fiscal Month Number], [Fiscal Month Label], [Fiscal Year], [Fiscal Year Label], [ISO Week Number] FROM [common].[D_Date]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_Employee",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_Employee_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Employee_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Employee ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Employee ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Employee",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Employee"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Preferred Name",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Preferred Name"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Is Salesperson",
+                                                                                                  "dataType":  "boolean",
+                                                                                                  "sourceColumn":  "Is Salesperson"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_Employee",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_Employee_SID], [WWI Employee ID], [Employee], [Preferred Name], [Is Salesperson], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_Employee]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_PaymentMethod",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_PaymentMethod_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_PaymentMethod_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Payment Method ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Payment Method ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Payment Method",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Payment Method"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_PaymentMethod",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_PaymentMethod_SID], [WWI Payment Method ID], [Payment Method], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_PaymentMethod]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_StockItem",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_StockItem_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_StockItem_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Stock Item ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Stock Item ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Stock Item",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Stock Item"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Color",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Color"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Selling Package",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Selling Package"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Buying Package",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Buying Package"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Brand",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Brand"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Size",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Size"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lead Time Days",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lead Time Days"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Quantity Per Outer",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Quantity Per Outer"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Is Chiller Stock",
+                                                                                                  "dataType":  "boolean",
+                                                                                                  "sourceColumn":  "Is Chiller Stock"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Barcode",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Barcode"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Tax Rate",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Tax Rate"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Unit Price",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Unit Price"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Recommended Retail Price",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Recommended Retail Price"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Typical Weight Per Unit",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Typical Weight Per Unit"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_StockItem",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_StockItem_SID], [WWI Stock Item ID], [Stock Item], [Color], [Selling Package], [Buying Package], [Brand], [Size], [Lead Time Days], [Quantity Per Outer], [Is Chiller Stock], [Barcode], [Tax Rate], [Unit Price], [Recommended Retail Price], [Typical Weight Per Unit], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_StockItem]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_Supplier",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_Supplier_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Supplier_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Supplier ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Supplier ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Supplier",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Supplier"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Category",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Category"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Primary Contact",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Primary Contact"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Supplier Reference",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Supplier Reference"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Payment Days",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Payment Days"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Postal Code",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Postal Code"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_Supplier",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_Supplier_SID], [WWI Supplier ID], [Supplier], [Category], [Primary Contact], [Supplier Reference], [Payment Days], [Postal Code], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_Supplier]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "D_TransactionType",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "D_TransactionType_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_TransactionType_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Transaction Type ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Transaction Type ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Transaction Type",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Transaction Type"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid From",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid From"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Valid To",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Valid To"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "D_TransactionType",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [D_TransactionType_SID], [WWI Transaction Type ID], [Transaction Type], [Valid From], [Valid To], [Lineage Key] FROM [common].[D_TransactionType]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "F_Movement",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Movement Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Movement Key"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_StockItem_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_StockItem_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Supplier_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Supplier_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_TransactionType_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_TransactionType_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Stock Item Transaction ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Stock Item Transaction ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Invoice ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Invoice ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Purchase Order ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Purchase Order ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Quantity",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Quantity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "F_Movement",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Movement Key], [Date], [D_StockItem_SID], [D_Customer_SID], [D_Supplier_SID], [D_TransactionType_SID], [WWI Stock Item Transaction ID], [WWI Invoice ID], [WWI Purchase Order ID], [Quantity], [Lineage Key] FROM [delivery].[F_Movement]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ],
+                                                                              "measures":  [
+                                                                                               {
+                                                                                                   "name":  "Movement Quantity Total",
+                                                                                                   "expression":  "SUM(\u0027F_Movement\u0027[Quantity])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               }
+                                                                                           ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "F_Purchase",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Purchase Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Purchase Key"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Supplier_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Supplier_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_StockItem_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_StockItem_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Purchase Order ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Purchase Order ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Ordered Outers",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Ordered Outers"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Ordered Quantity",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Ordered Quantity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Received Outers",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Received Outers"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Package",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Package"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Is Order Finalized",
+                                                                                                  "dataType":  "boolean",
+                                                                                                  "sourceColumn":  "Is Order Finalized"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "F_Purchase",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Purchase Key], [Date], [D_Supplier_SID], [D_StockItem_SID], [WWI Purchase Order ID], [Ordered Outers], [Ordered Quantity], [Received Outers], [Package], [Is Order Finalized], [Lineage Key] FROM [delivery].[F_Purchase]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ],
+                                                                              "measures":  [
+                                                                                               {
+                                                                                                   "name":  "Ordered Quantity Total",
+                                                                                                   "expression":  "SUM(\u0027F_Purchase\u0027[Ordered Quantity])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Received Outers Total",
+                                                                                                   "expression":  "SUM(\u0027F_Purchase\u0027[Received Outers])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               }
+                                                                                           ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "F_StockHolding",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Stock Holding Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Stock Holding Key"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_StockItem_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_StockItem_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Quantity On Hand",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Quantity On Hand"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Bin Location",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Bin Location"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Last Stocktake Quantity",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Last Stocktake Quantity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Last Cost Price",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Last Cost Price"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Reorder Level",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Reorder Level"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Target Stock Level",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Target Stock Level"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "F_StockHolding",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Stock Holding Key], [D_StockItem_SID], [Quantity On Hand], [Bin Location], [Last Stocktake Quantity], [Last Cost Price], [Reorder Level], [Target Stock Level], [Lineage Key] FROM [delivery].[F_StockHolding]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ],
+                                                                              "measures":  [
+                                                                                               {
+                                                                                                   "name":  "Quantity On Hand Total",
+                                                                                                   "expression":  "SUM(\u0027F_StockHolding\u0027[Quantity On Hand])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Inventory Value",
+                                                                                                   "expression":  "SUMX(\u0027F_StockHolding\u0027, \u0027F_StockHolding\u0027[Quantity On Hand] * \u0027F_StockHolding\u0027[Last Cost Price])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               }
+                                                                                           ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "F_Order",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Order Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Order Key"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_City_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_City_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_StockItem_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_StockItem_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Order Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Order Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Picked Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Picked Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Salesperson_D_Employee_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Salesperson_D_Employee_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Picker_D_Employee_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Picker_D_Employee_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Order ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Order ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Backorder ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Backorder ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Description",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Description"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Package",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Package"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Quantity",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Quantity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Unit Price",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Unit Price"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Tax Rate",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Tax Rate"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Excluding Tax",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Total Excluding Tax"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Tax Amount",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Tax Amount"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Including Tax",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Total Including Tax"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "F_Order",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Order Key], [D_City_SID], [D_Customer_SID], [D_StockItem_SID], [Order Date], [Picked Date], [Salesperson_D_Employee_SID], [Picker_D_Employee_SID], [WWI Order ID], [WWI Backorder ID], [Description], [Package], [Quantity], [Unit Price], [Tax Rate], [Total Excluding Tax], [Tax Amount], [Total Including Tax], [Lineage Key] FROM [finance].[F_Order]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ],
+                                                                              "measures":  [
+                                                                                               {
+                                                                                                   "name":  "Total Order Value",
+                                                                                                   "expression":  "SUM(\u0027F_Order\u0027[Total Including Tax])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Order Quantity Total",
+                                                                                                   "expression":  "SUM(\u0027F_Order\u0027[Quantity])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Order Count",
+                                                                                                   "expression":  "DISTINCTCOUNT(\u0027F_Order\u0027[Order Key])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               }
+                                                                                           ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "F_Sale",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Sale Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Sale Key"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_City_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_City_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "BillTo_D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "BillTo_D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_StockItem_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_StockItem_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Invoice Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Invoice Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Delivery Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Delivery Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Employee_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Employee_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Invoice ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Invoice ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Description",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Description"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Package",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Package"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Quantity",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Quantity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Unit Price",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Unit Price"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Tax Rate",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Tax Rate"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Excluding Tax",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Total Excluding Tax"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Tax Amount",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Tax Amount"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Profit",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Profit"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Including Tax",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Total Including Tax"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Dry Items",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Total Dry Items"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Chiller Items",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Total Chiller Items"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "F_Sale",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Sale Key], [D_City_SID], [D_Customer_SID], [BillTo_D_Customer_SID], [D_StockItem_SID], [Invoice Date], [Delivery Date], [D_Employee_SID], [WWI Invoice ID], [Description], [Package], [Quantity], [Unit Price], [Tax Rate], [Total Excluding Tax], [Tax Amount], [Profit], [Total Including Tax], [Total Dry Items], [Total Chiller Items], [Lineage Key] FROM [finance].[F_Sale]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ],
+                                                                              "measures":  [
+                                                                                               {
+                                                                                                   "name":  "Total Sales",
+                                                                                                   "expression":  "SUM(\u0027F_Sale\u0027[Total Including Tax])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Net Sales",
+                                                                                                   "expression":  "SUM(\u0027F_Sale\u0027[Total Excluding Tax])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Total Profit",
+                                                                                                   "expression":  "SUM(\u0027F_Sale\u0027[Profit])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Sale Quantity Total",
+                                                                                                   "expression":  "SUM(\u0027F_Sale\u0027[Quantity])",
+                                                                                                   "formatString":  "#,0"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Average Sale Value",
+                                                                                                   "expression":  "DIVIDE([Total Sales], DISTINCTCOUNT(\u0027F_Sale\u0027[Sale Key]))",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               }
+                                                                                           ]
+                                                                          },
+                                                                          {
+                                                                              "name":  "F_Transaction",
+                                                                              "columns":  [
+                                                                                              {
+                                                                                                  "name":  "Transaction Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Transaction Key"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Date",
+                                                                                                  "dataType":  "dateTime",
+                                                                                                  "sourceColumn":  "Date"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "BillTo_D_Customer_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "BillTo_D_Customer_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_Supplier_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_Supplier_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_TransactionType_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_TransactionType_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "D_PaymentMethod_SID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "D_PaymentMethod_SID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Customer Transaction ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Customer Transaction ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Supplier Transaction ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Supplier Transaction ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Invoice ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Invoice ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "WWI Purchase Order ID",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "WWI Purchase Order ID"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Supplier Invoice Number",
+                                                                                                  "dataType":  "string",
+                                                                                                  "sourceColumn":  "Supplier Invoice Number"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Excluding Tax",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Total Excluding Tax"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Tax Amount",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Tax Amount"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Total Including Tax",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Total Including Tax"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Outstanding Balance",
+                                                                                                  "dataType":  "decimal",
+                                                                                                  "sourceColumn":  "Outstanding Balance"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Is Finalized",
+                                                                                                  "dataType":  "boolean",
+                                                                                                  "sourceColumn":  "Is Finalized"
+                                                                                              },
+                                                                                              {
+                                                                                                  "name":  "Lineage Key",
+                                                                                                  "dataType":  "int64",
+                                                                                                  "sourceColumn":  "Lineage Key"
+                                                                                              }
+                                                                                          ],
+                                                                              "partitions":  [
+                                                                                                 {
+                                                                                                     "name":  "F_Transaction",
+                                                                                                     "mode":  "import",
+                                                                                                     "source":  {
+                                                                                                                    "type":  "query",
+                                                                                                                    "query":  "SELECT [Transaction Key], [Date], [D_Customer_SID], [BillTo_D_Customer_SID], [D_Supplier_SID], [D_TransactionType_SID], [D_PaymentMethod_SID], [WWI Customer Transaction ID], [WWI Supplier Transaction ID], [WWI Invoice ID], [WWI Purchase Order ID], [Supplier Invoice Number], [Total Excluding Tax], [Tax Amount], [Total Including Tax], [Outstanding Balance], [Is Finalized], [Lineage Key] FROM [finance].[F_Transaction]",
+                                                                                                                    "dataSource":  "WideWorldImportersDW"
+                                                                                                                }
+                                                                                                 }
+                                                                                             ],
+                                                                              "measures":  [
+                                                                                               {
+                                                                                                   "name":  "Transaction Amount",
+                                                                                                   "expression":  "SUM(\u0027F_Transaction\u0027[Total Including Tax])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               },
+                                                                                               {
+                                                                                                   "name":  "Outstanding Balance Total",
+                                                                                                   "expression":  "SUM(\u0027F_Transaction\u0027[Outstanding Balance])",
+                                                                                                   "formatString":  "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+                                                                                               }
+                                                                                           ]
+                                                                          }
+                                                                      ],
+                                                           "relationships":  [
+                                                                                 {
+                                                                                     "name":  "F_Movement_D_Customer_SID_to_D_Customer",
+                                                                                     "fromTable":  "F_Movement",
+                                                                                     "fromColumn":  "D_Customer_SID",
+                                                                                     "toTable":  "D_Customer",
+                                                                                     "toColumn":  "D_Customer_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Movement_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Movement",
+                                                                                     "fromColumn":  "Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Movement_D_StockItem_SID_to_D_StockItem",
+                                                                                     "fromTable":  "F_Movement",
+                                                                                     "fromColumn":  "D_StockItem_SID",
+                                                                                     "toTable":  "D_StockItem",
+                                                                                     "toColumn":  "D_StockItem_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Movement_D_Supplier_SID_to_D_Supplier",
+                                                                                     "fromTable":  "F_Movement",
+                                                                                     "fromColumn":  "D_Supplier_SID",
+                                                                                     "toTable":  "D_Supplier",
+                                                                                     "toColumn":  "D_Supplier_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Movement_D_TransactionType_SID_to_D_TransactionType",
+                                                                                     "fromTable":  "F_Movement",
+                                                                                     "fromColumn":  "D_TransactionType_SID",
+                                                                                     "toTable":  "D_TransactionType",
+                                                                                     "toColumn":  "D_TransactionType_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Purchase_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Purchase",
+                                                                                     "fromColumn":  "Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Purchase_D_StockItem_SID_to_D_StockItem",
+                                                                                     "fromTable":  "F_Purchase",
+                                                                                     "fromColumn":  "D_StockItem_SID",
+                                                                                     "toTable":  "D_StockItem",
+                                                                                     "toColumn":  "D_StockItem_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Purchase_D_Supplier_SID_to_D_Supplier",
+                                                                                     "fromTable":  "F_Purchase",
+                                                                                     "fromColumn":  "D_Supplier_SID",
+                                                                                     "toTable":  "D_Supplier",
+                                                                                     "toColumn":  "D_Supplier_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_StockHolding_D_StockItem_SID_to_D_StockItem",
+                                                                                     "fromTable":  "F_StockHolding",
+                                                                                     "fromColumn":  "D_StockItem_SID",
+                                                                                     "toTable":  "D_StockItem",
+                                                                                     "toColumn":  "D_StockItem_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_D_City_SID_to_D_City",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "D_City_SID",
+                                                                                     "toTable":  "D_City",
+                                                                                     "toColumn":  "D_City_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_D_Customer_SID_to_D_Customer",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "D_Customer_SID",
+                                                                                     "toTable":  "D_Customer",
+                                                                                     "toColumn":  "D_Customer_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_Order_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "Order Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_Picked_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "Picked Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date",
+                                                                                     "isActive":  false
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_Picker_D_Employee_SID_to_D_Employee",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "Picker_D_Employee_SID",
+                                                                                     "toTable":  "D_Employee",
+                                                                                     "toColumn":  "D_Employee_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_Salesperson_D_Employee_SID_to_D_Employee",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "Salesperson_D_Employee_SID",
+                                                                                     "toTable":  "D_Employee",
+                                                                                     "toColumn":  "D_Employee_SID",
+                                                                                     "isActive":  false
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Order_D_StockItem_SID_to_D_StockItem",
+                                                                                     "fromTable":  "F_Order",
+                                                                                     "fromColumn":  "D_StockItem_SID",
+                                                                                     "toTable":  "D_StockItem",
+                                                                                     "toColumn":  "D_StockItem_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_BillTo_D_Customer_SID_to_D_Customer",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "BillTo_D_Customer_SID",
+                                                                                     "toTable":  "D_Customer",
+                                                                                     "toColumn":  "D_Customer_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_D_City_SID_to_D_City",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "D_City_SID",
+                                                                                     "toTable":  "D_City",
+                                                                                     "toColumn":  "D_City_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_D_Customer_SID_to_D_Customer",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "D_Customer_SID",
+                                                                                     "toTable":  "D_Customer",
+                                                                                     "toColumn":  "D_Customer_SID",
+                                                                                     "isActive":  false
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_Delivery_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "Delivery Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_Invoice_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "Invoice Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date",
+                                                                                     "isActive":  false
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_D_Employee_SID_to_D_Employee",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "D_Employee_SID",
+                                                                                     "toTable":  "D_Employee",
+                                                                                     "toColumn":  "D_Employee_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Sale_D_StockItem_SID_to_D_StockItem",
+                                                                                     "fromTable":  "F_Sale",
+                                                                                     "fromColumn":  "D_StockItem_SID",
+                                                                                     "toTable":  "D_StockItem",
+                                                                                     "toColumn":  "D_StockItem_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Transaction_BillTo_D_Customer_SID_to_D_Customer",
+                                                                                     "fromTable":  "F_Transaction",
+                                                                                     "fromColumn":  "BillTo_D_Customer_SID",
+                                                                                     "toTable":  "D_Customer",
+                                                                                     "toColumn":  "D_Customer_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Transaction_D_Customer_SID_to_D_Customer",
+                                                                                     "fromTable":  "F_Transaction",
+                                                                                     "fromColumn":  "D_Customer_SID",
+                                                                                     "toTable":  "D_Customer",
+                                                                                     "toColumn":  "D_Customer_SID",
+                                                                                     "isActive":  false
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Transaction_Date_to_D_Date",
+                                                                                     "fromTable":  "F_Transaction",
+                                                                                     "fromColumn":  "Date",
+                                                                                     "toTable":  "D_Date",
+                                                                                     "toColumn":  "Date"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Transaction_D_PaymentMethod_SID_to_D_PaymentMethod",
+                                                                                     "fromTable":  "F_Transaction",
+                                                                                     "fromColumn":  "D_PaymentMethod_SID",
+                                                                                     "toTable":  "D_PaymentMethod",
+                                                                                     "toColumn":  "D_PaymentMethod_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Transaction_D_Supplier_SID_to_D_Supplier",
+                                                                                     "fromTable":  "F_Transaction",
+                                                                                     "fromColumn":  "D_Supplier_SID",
+                                                                                     "toTable":  "D_Supplier",
+                                                                                     "toColumn":  "D_Supplier_SID"
+                                                                                 },
+                                                                                 {
+                                                                                     "name":  "F_Transaction_D_TransactionType_SID_to_D_TransactionType",
+                                                                                     "fromTable":  "F_Transaction",
+                                                                                     "fromColumn":  "D_TransactionType_SID",
+                                                                                     "toTable":  "D_TransactionType",
+                                                                                     "toColumn":  "D_TransactionType_SID"
+                                                                                 }
+                                                                             ]
+                                                       }
+                                         }
+                        }
+}

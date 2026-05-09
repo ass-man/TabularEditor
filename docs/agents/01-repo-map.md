@@ -22,7 +22,7 @@ First pass from targeted inspection of solution/project files, top-level folders
 - `AntlrGrammars/`: ANTLR grammar sources for C# and DAX lexing.
 - `TabularEditorTest/`: app-level tests, including `CLITests.cs`, `ScriptEngineTests.cs`, BPA tests, UI tree tests, regression tests, and test data.
 - `TOMWrapperTest/`: wrapper-level tests, regression tests, test data, and T4-generated test helpers.
-- `Scripts/`: property export/import helper scripts.
+- `Scripts/`: reusable Tabular Editor C# scripts for model editing/automation, including property export/import helpers. Read `docs/agents/06-tabular-editor-csharp-scripting.md` before adding scripts.
 - `Documentation/`: product/user documentation.
 - `.github/ISSUE_TEMPLATE/`: issue templates. No workflow files found in targeted listing.
 

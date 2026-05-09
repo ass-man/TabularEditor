@@ -7,9 +7,10 @@ This repo is large enough that new agents should not reread everything. Start fr
 1. `AGENTS.md`
 2. `docs/agents/01-repo-map.md`
 3. `docs/agents/03-build-and-test.md`
-4. `docs/agents/features/<feature>/request.md`
-5. `docs/agents/features/<feature>/plan.md`
-6. `docs/agents/features/<feature>/implementation-log.md` if work already started
+4. `docs/agents/06-tabular-editor-csharp-scripting.md` when creating or running Tabular Editor scripts
+5. `docs/agents/features/<feature>/request.md`
+6. `docs/agents/features/<feature>/plan.md`
+7. `docs/agents/features/<feature>/implementation-log.md` if work already started
 
 ## Selecting Relevant Areas
 

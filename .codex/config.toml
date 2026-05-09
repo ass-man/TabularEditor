@@ -3,3 +3,10 @@
 
 [agents]
 max_depth = 1
+
+[mcp_servers.tabulareditor-cli]
+command = "uv"
+args = ["--directory", "C:\\Users\\gamer\\source\\repos\\TabularEditor\\tools\\mcp", "run", "server.py"]
+enabled = true
+startup_timeout_sec = 10
+tool_timeout_sec = 60

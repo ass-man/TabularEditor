@@ -9,6 +9,7 @@ Starter file. Add only pitfalls that are verified or clearly relevant from repo 
 - Installer/signing/release files are present and should be avoided unless explicitly required.
 - WinForms designer/resource files are easy to churn. Avoid touching `*.Designer.cs` and generated resource designer files unless planned.
 - Test projects use MSTest-style project metadata and may need Visual Studio test tooling or `vstest.console`.
+- For local SSAS/tabular model setup, prefer Tabular Editor CLI build/deploy/schema-check commands over direct ad hoc ADOMD TMSL execution. Save reusable model editing/deployment scripts, but keep them model-agnostic and free of hardcoded object names. Do not commit one-time local repair scripts.
 
 ## To Verify
 

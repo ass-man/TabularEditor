@@ -205,6 +205,39 @@ namespace TabularEditor.UI
             }));
         }
 
+        public void Database_Refresh()
+        {
+            if (Handler == null || !Handler.IsConnected) return;
+
+            if (Handler.HasUnsavedChanges || ExpressionEditor_IsDirty)
+            {
+                var result = MessageBox.Show(UI.FormMain,
+                    "Refreshing the model from the connected server will discard any unsaved changes in Tabular Editor. Continue?",
+                    "Unsaved changes in the model", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                if (result == DialogResult.Cancel) return;
+            }
+
+            ExpressionEditor_CancelEdit();
+
+            UI.StatusLabel.Text = "Refreshing model from server...";
+            Application.DoEvents();
+
+            using (new Hourglass())
+            {
+                try
+                {
+                    Handler.RefreshTom();
+                    UpdateUIText();
+                    UI.TreeView.Refresh();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(UI.FormMain, ex.Message, "Could not refresh model from server", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    UpdateUIText();
+                }
+            }
+        }
+
         private void Database_Save()
         {
             UI.ErrorLabel.Text = "";

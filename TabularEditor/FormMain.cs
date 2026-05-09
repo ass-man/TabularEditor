@@ -515,6 +515,16 @@ Selected.Hierarchies.ForEach(item => item.TranslatedDisplayFolders.SetAll(item.D
             UI.Save();
         }
 
+        private void actRefreshFromServer_UpdateEx(object sender, UpdateExEventArgs e)
+        {
+            e.Enabled = UI.Handler != null && UI.Handler.IsConnected;
+        }
+
+        private void actRefreshFromServer_Execute(object sender, EventArgs e)
+        {
+            UI.Database_Refresh();
+        }
+
         private void actSaveAs_Execute(object sender, EventArgs e)
         {
             UI.File_SaveAs();

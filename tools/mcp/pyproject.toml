@@ -1,0 +1,18 @@
+[project]
+name = "tabulareditor-cli-mcp"
+version = "0.1.0"
+description = "Repo-local MCP server for documented Tabular Editor CLI usage."
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
