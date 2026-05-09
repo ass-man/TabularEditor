@@ -1,7 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 public class MeasureKillerViewerPlugin : IRuntimeWindowPlugin
 {
@@ -22,13 +26,27 @@ internal class MeasureKillerViewerForm : Form
     private readonly CheckBox chkSelectedObject;
     private readonly TreeView tree;
     private readonly TextBox txtDetails;
+    private readonly DataGridView gridObjects;
+    private readonly ComboBox cboStatus;
+    private readonly ComboBox cboObjectType;
+    private readonly ComboBox cboTable;
+    private readonly TextBox txtSummary;
+    private readonly TextBox txtRaw;
     private readonly CheckBox chkFullDetails;
+    private readonly Panel visualPreview;
+    private readonly RowStyle visualPreviewRow;
+    private readonly List<VisualBox> visualBoxes = new List<VisualBox>();
     private readonly Timer selectionTimer;
     private readonly List<CheckBox> impactFilterChecks = new List<CheckBox>();
     private readonly List<CheckBox> objectTypeFilterChecks = new List<CheckBox>();
     private readonly List<MkNode> allRoots = new List<MkNode>();
+    private readonly List<LineageObject> lineageObjects = new List<LineageObject>();
+    private readonly Dictionary<string, LineageObject> lineageByKey = new Dictionary<string, LineageObject>(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<EffectiveUsage, Label> statusCountLabels = new Dictionary<EffectiveUsage, Label>();
+    private readonly HashSet<string> rememberedExpandedPaths = new HashSet<string>();
     private string lastSelectionKey = "";
     private bool expandAfterSelectionChange;
+    private bool suppressExpansionTracking;
 
     public MeasureKillerViewerForm(PluginHostContext context)
     {
@@ -43,86 +61,97 @@ internal class MeasureKillerViewerForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 3
+            RowCount = 4
         };
         rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 142));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         Controls.Add(rootLayout);
 
         var toolStrip = new ToolStrip { Dock = DockStyle.Fill };
         var btnRefresh = new ToolStripButton("Refresh");
         var btnOpenJson = new ToolStripButton("Open JSON");
-        var btnExpandAll = new ToolStripButton("Expand All");
-        var btnCollapseAll = new ToolStripButton("Collapse All");
         btnRefresh.Click += delegate { LoadJson(); };
         btnOpenJson.Click += delegate { OpenJson(); };
-        btnExpandAll.Click += delegate { RenderTree(); tree.ExpandAll(); };
-        btnCollapseAll.Click += delegate { tree.CollapseAll(); };
         chkFullDetails = new CheckBox { AutoSize = true, Text = "Full details", Checked = false };
-        chkFullDetails.CheckedChanged += delegate { UpdateDetailsPanel(); };
+        chkFullDetails.CheckedChanged += delegate { UpdateSelectedObjectDetails(); };
         toolStrip.Items.Add(btnRefresh);
         toolStrip.Items.Add(btnOpenJson);
-        toolStrip.Items.Add(new ToolStripSeparator());
-        toolStrip.Items.Add(btnExpandAll);
-        toolStrip.Items.Add(btnCollapseAll);
-        toolStrip.Items.Add(new ToolStripSeparator());
-        toolStrip.Items.Add(new ToolStripControlHost(chkFullDetails));
         rootLayout.Controls.Add(toolStrip, 0, 0);
 
-        var header = new TableLayoutPanel();
-        header.Dock = DockStyle.Fill;
-        header.ColumnCount = 4;
-        header.RowCount = 5;
-        header.Padding = new Padding(8, 6, 8, 6);
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
+        var filterLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 11,
+            RowCount = 2,
+            Padding = new Padding(8, 6, 8, 4)
+        };
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        filterLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65));
 
-        header.Controls.Add(new Label { Text = "JSON:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 6, 0) }, 0, 0);
-        header.Controls.Add(new TextBox { ReadOnly = true, Dock = DockStyle.Fill, Text = JsonPath }, 1, 0);
-        header.Controls.Add(new Label { Text = "Filter:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 4, 6, 0) }, 2, 0);
+        filterLayout.Controls.Add(new Label { Text = "Search:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 5, 6, 0) }, 0, 0);
         txtFilter = new TextBox { Dock = DockStyle.Fill };
-        txtFilter.TextChanged += delegate { RenderTree(); };
-        header.Controls.Add(txtFilter, 3, 0);
+        txtFilter.TextChanged += delegate { ApplyFilters(); };
+        filterLayout.Controls.Add(txtFilter, 1, 0);
 
-        lblStatus = new Label { AutoSize = true, Dock = DockStyle.Fill, Text = "Loading...", Margin = new Padding(0, 6, 0, 0) };
-        header.Controls.Add(lblStatus, 1, 1);
-        header.SetColumnSpan(lblStatus, 3);
+        filterLayout.Controls.Add(new Label { Text = "Status:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 5, 6, 0) }, 2, 0);
+        cboStatus = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+        cboStatus.Items.AddRange(new object[] { "All", "Keep", "Cascade candidate", "Relationship only", "Relationship island", "Unused", "Review" });
+        cboStatus.SelectedIndex = 0;
+        cboStatus.SelectedIndexChanged += delegate { ApplyFilters(); };
+        filterLayout.Controls.Add(cboStatus, 3, 0);
 
-        chkSelectedObject = new CheckBox { AutoSize = true, Checked = false, Text = "Filter to selected object", Margin = new Padding(0, 6, 6, 0) };
-        chkSelectedObject.CheckedChanged += delegate { RenderTree(); UpdateSelectionLabel(); };
-        header.Controls.Add(chkSelectedObject, 0, 2);
-        lblSelection = new Label { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 7, 0, 0) };
-        header.Controls.Add(lblSelection, 1, 2);
-        header.SetColumnSpan(lblSelection, 3);
+        filterLayout.Controls.Add(new Label { Text = "Type:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 5, 6, 0) }, 4, 0);
+        cboObjectType = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+        cboObjectType.Items.AddRange(new object[] { "All", "Table", "Column", "Measure", "Relationship", "Visual" });
+        cboObjectType.SelectedIndex = 0;
+        cboObjectType.SelectedIndexChanged += delegate { ApplyFilters(); };
+        filterLayout.Controls.Add(cboObjectType, 5, 0);
 
-        var impactFilters = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
-        impactFilters.Controls.Add(new Label { AutoSize = true, Text = "Impact:", Margin = new Padding(0, 5, 6, 0) });
-        AddFilterCheck(impactFilters, impactFilterChecks, "Unused", ImpactKind.Unused);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Rel-key table", ImpactKind.RelationshipOnlyIsolated);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Rel-focused table", ImpactKind.RelationshipOnly);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Unused measure only", ImpactKind.MeasureOnlyDeadEnd);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Report", ImpactKind.Report);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Model", ImpactKind.Model);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Relationship", ImpactKind.Relationship);
-        AddFilterCheck(impactFilters, impactFilterChecks, "Used", ImpactKind.Used);
-        header.Controls.Add(impactFilters, 0, 3);
-        header.SetColumnSpan(impactFilters, 4);
+        filterLayout.Controls.Add(new Label { Text = "Table:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 5, 6, 0) }, 6, 0);
+        cboTable = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+        cboTable.SelectedIndexChanged += delegate { ApplyFilters(); };
+        filterLayout.Controls.Add(cboTable, 7, 0);
 
-        var typeFilters = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
-        typeFilters.Controls.Add(new Label { AutoSize = true, Text = "Types:", Margin = new Padding(0, 5, 14, 0) });
-        AddFilterCheck(typeFilters, objectTypeFilterChecks, "Tables", "Table");
-        AddFilterCheck(typeFilters, objectTypeFilterChecks, "Columns", "Column");
-        AddFilterCheck(typeFilters, objectTypeFilterChecks, "Measures", "Measure");
-        AddFilterCheck(typeFilters, objectTypeFilterChecks, "Partitions", "Partition");
-        AddFilterCheck(typeFilters, objectTypeFilterChecks, "Relationships", "Relationship");
-        AddFilterCheck(typeFilters, objectTypeFilterChecks, "Best practices", "BestPractice");
-        header.Controls.Add(typeFilters, 0, 4);
-        header.SetColumnSpan(typeFilters, 4);
-        rootLayout.Controls.Add(header, 0, 1);
+        chkSelectedObject = new CheckBox { AutoSize = true, Checked = false, Text = "Selected object only", Margin = new Padding(12, 4, 6, 0) };
+        chkSelectedObject.CheckedChanged += delegate { ApplyFilters(); UpdateSelectionLabel(); };
+        filterLayout.Controls.Add(chkSelectedObject, 8, 0);
+        chkFullDetails.Margin = new Padding(12, 4, 6, 0);
+        filterLayout.Controls.Add(chkFullDetails, 9, 0);
+
+        lblStatus = new Label { AutoSize = true, Dock = DockStyle.Fill, Text = "Loading...", Margin = new Padding(0, 8, 0, 0) };
+        filterLayout.Controls.Add(lblStatus, 1, 1);
+        filterLayout.SetColumnSpan(lblStatus, 7);
+        lblSelection = new Label { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(12, 8, 0, 0) };
+        filterLayout.Controls.Add(lblSelection, 8, 1);
+        filterLayout.SetColumnSpan(lblSelection, 3);
+        rootLayout.Controls.Add(filterLayout, 0, 1);
+
+        var summaryStrip = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(8, 5, 8, 4)
+        };
+        AddStatusCount(summaryStrip, EffectiveUsage.Keep, "Keep");
+        AddStatusCount(summaryStrip, EffectiveUsage.CascadeCandidate, "Cascade");
+        AddStatusCount(summaryStrip, EffectiveUsage.RelationshipOnly, "Relationship only");
+        AddStatusCount(summaryStrip, EffectiveUsage.RelationshipIsland, "Relationship island");
+        AddStatusCount(summaryStrip, EffectiveUsage.Unused, "Unused");
+        AddStatusCount(summaryStrip, EffectiveUsage.Review, "Review");
+        rootLayout.Controls.Add(summaryStrip, 0, 2);
 
         tree = new TreeView
         {
@@ -134,9 +163,17 @@ internal class MeasureKillerViewerForm : Form
             ItemHeight = 20,
             BorderStyle = BorderStyle.FixedSingle
         };
-        tree.AfterSelect += delegate { UpdateDetailsPanel(); };
+        tree.AfterSelect += delegate { UpdatePreviewFromUsedByTreeSelection(); };
+        tree.AfterExpand += delegate(object sender, TreeViewEventArgs e)
+        {
+            if (!suppressExpansionTracking && !string.IsNullOrEmpty(e.Node.Name)) rememberedExpandedPaths.Add(e.Node.Name);
+        };
+        tree.AfterCollapse += delegate(object sender, TreeViewEventArgs e)
+        {
+            if (!suppressExpansionTracking) RemoveRememberedExpansion(e.Node);
+        };
 
-        txtDetails = new TextBox
+        txtSummary = new TextBox
         {
             Dock = DockStyle.Fill,
             Multiline = true,
@@ -145,16 +182,99 @@ internal class MeasureKillerViewerForm : Form
             WordWrap = true,
             Font = new Font("Segoe UI", 9f)
         };
+        txtDetails = txtSummary;
+        txtRaw = new TextBox
+        {
+            Dock = DockStyle.Fill,
+            Multiline = true,
+            ReadOnly = true,
+            ScrollBars = ScrollBars.Both,
+            WordWrap = false,
+            Font = new Font("Consolas", 9f)
+        };
+
+        visualPreview = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            BorderStyle = BorderStyle.FixedSingle,
+            Visible = false
+        };
+        visualPreview.Paint += PaintVisualPreview;
+
+        var detailsLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 1
+        };
+        detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        detailsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        detailsLayout.Controls.Add(txtSummary, 0, 0);
+
+        var tabs = new TabControl { Dock = DockStyle.Fill };
+        var tabSummary = new TabPage("Summary");
+        var tabChain = new TabPage("Used By Chain");
+        var tabRaw = new TabPage("Raw Details");
+        tabSummary.Controls.Add(detailsLayout);
+        tabChain.Controls.Add(tree);
+        tabRaw.Controls.Add(txtRaw);
+        tabs.TabPages.Add(tabSummary);
+        tabs.TabPages.Add(tabChain);
+        tabs.TabPages.Add(tabRaw);
+
+        var rightLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2
+        };
+        rightLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        visualPreviewRow = new RowStyle(SizeType.Absolute, 0);
+        rightLayout.RowStyles.Add(visualPreviewRow);
+        rightLayout.Controls.Add(tabs, 0, 0);
+        rightLayout.Controls.Add(visualPreview, 0, 1);
+
+        gridObjects = new DataGridView
+        {
+            Dock = DockStyle.Fill,
+            ReadOnly = true,
+            MultiSelect = false,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            AllowUserToAddRows = false,
+            AllowUserToDeleteRows = false,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+            RowHeadersVisible = false,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+        gridObjects.Columns.Add("Status", "Status");
+        gridObjects.Columns.Add("ObjectType", "Object Type");
+        gridObjects.Columns.Add("Table", "Table");
+        gridObjects.Columns.Add("Object", "Object");
+        gridObjects.Columns.Add("DirectUsage", "Direct Usage");
+        gridObjects.Columns.Add("UsedBy", "Used By");
+        gridObjects.Columns.Add("Reason", "Reason");
+        gridObjects.Columns["Status"].FillWeight = 80;
+        gridObjects.Columns["ObjectType"].FillWeight = 70;
+        gridObjects.Columns["Table"].FillWeight = 95;
+        gridObjects.Columns["Object"].FillWeight = 130;
+        gridObjects.Columns["DirectUsage"].FillWeight = 115;
+        gridObjects.Columns["UsedBy"].FillWeight = 60;
+        gridObjects.Columns["Reason"].FillWeight = 190;
+        gridObjects.SelectionChanged += delegate { UpdateSelectedObjectDetails(); };
+        gridObjects.CellMouseDown += GridObjects_CellMouseDown;
+        gridObjects.ContextMenuStrip = BuildGridContextMenu();
 
         var split = new SplitContainer
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
-            SplitterDistance = 820
+            SplitterDistance = 760
         };
-        split.Panel1.Controls.Add(tree);
-        split.Panel2.Controls.Add(txtDetails);
-        rootLayout.Controls.Add(split, 0, 2);
+        split.Panel1.Controls.Add(gridObjects);
+        split.Panel2.Controls.Add(rightLayout);
+        rootLayout.Controls.Add(split, 0, 3);
 
         selectionTimer = new Timer { Interval = 500 };
         selectionTimer.Tick += delegate { RefreshSelectionFilterIfNeeded(); };
@@ -173,15 +293,56 @@ internal class MeasureKillerViewerForm : Form
             Tag = tag,
             Margin = new Padding(0, 3, 12, 0)
         };
-        check.CheckedChanged += delegate { RenderTree(); };
+        check.CheckedChanged += delegate { RenderTree(true, false); };
         target.Add(check);
         panel.Controls.Add(check);
+    }
+
+    private void AddStatusCount(FlowLayoutPanel panel, EffectiveUsage status, string label)
+    {
+        var count = new Label
+        {
+            AutoSize = false,
+            Width = 150,
+            Height = 26,
+            TextAlign = ContentAlignment.MiddleCenter,
+            BorderStyle = BorderStyle.FixedSingle,
+            BackColor = BackColorForUsage(status),
+            ForeColor = Color.Black,
+            Text = label + ": 0",
+            Margin = new Padding(0, 2, 8, 0)
+        };
+        count.Tag = label;
+        statusCountLabels[status] = count;
+        panel.Controls.Add(count);
+    }
+
+    private ContextMenuStrip BuildGridContextMenu()
+    {
+        var menu = new ContextMenuStrip();
+        menu.Items.Add("Copy object name", null, delegate { CopySelectedObjectName(); });
+        menu.Items.Add("Copy full lineage", null, delegate { CopySelectedLineage(); });
+        menu.Items.Add("Copy removal recommendation", null, delegate { CopySelectedRecommendation(); });
+        menu.Items.Add("Expand used-by chain", null, delegate { tree.ExpandAll(); });
+        menu.Items.Add("Filter to this table", null, delegate { FilterToSelectedTable(); });
+        menu.Items.Add("Filter to this status", null, delegate { FilterToSelectedStatus(); });
+        return menu;
+    }
+
+    private void GridObjects_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Right || e.RowIndex < 0) return;
+        gridObjects.ClearSelection();
+        gridObjects.Rows[e.RowIndex].Selected = true;
+        gridObjects.CurrentCell = gridObjects.Rows[e.RowIndex].Cells[Math.Max(0, e.ColumnIndex)];
     }
 
     private void LoadJson()
     {
         allRoots.Clear();
         tree.Nodes.Clear();
+        lineageObjects.Clear();
+        lineageByKey.Clear();
 
         if (!File.Exists(JsonPath))
         {
@@ -192,6 +353,12 @@ internal class MeasureKillerViewerForm : Form
         try
         {
             var root = Json.ReadObject(File.ReadAllText(JsonPath));
+            BuildLineageModel(root);
+            PopulateTableFilter();
+            ApplyFilters();
+            lblStatus.Text = "Loaded JSON export. Objects: " + lineageObjects.Count + ", relationships: " + Json.Array(root, "relationships").Count + ".";
+            return;
+
             var modelName = Json.Str(root, "model_name");
             var model = new MkNode("Model: " + modelName, false, "Export date: " + Json.Str(root, "export_date"));
             allRoots.Add(model);
@@ -283,13 +450,595 @@ internal class MeasureKillerViewerForm : Form
             AddBestPracticeNodes(bestPracticesFolder, Json.Value(root, "best_practices"));
 
             lblStatus.Text = "Loaded JSON export. Objects: " + objectCount + ", unused: " + unusedCount + ", relationships: " + Json.Array(root, "relationships").Count + ".";
-            RenderTree();
-            tree.ExpandAll();
-            ScrollTreeToRoot();
+            rememberedExpandedPaths.Clear();
+            RenderTree(true, true);
         }
         catch (Exception ex)
         {
             lblStatus.Text = "Failed to load JSON: " + ex.Message;
+        }
+    }
+
+    private void BuildLineageModel(Dictionary<string, object> root)
+    {
+        var unusedMeasures = BuildUnusedMeasureKeys(root);
+
+        foreach (Dictionary<string, object> table in Json.Array(root, "tables"))
+        {
+            var tableName = Json.Str(table, "name");
+            AddLineageObject("Table", tableName, tableName, table);
+
+            foreach (Dictionary<string, object> column in Json.Array(table, "columns"))
+                AddLineageObject("Column", tableName, Json.Str(column, "name"), column);
+
+            foreach (Dictionary<string, object> measure in Json.Array(table, "measures"))
+                AddLineageObject("Measure", tableName, Json.Str(measure, "name"), measure);
+        }
+
+        foreach (Dictionary<string, object> relationship in Json.Array(root, "relationships"))
+        {
+            var name = FirstNonEmpty(Json.Str(relationship, "name"), RelationshipName(relationship));
+            AddLineageObject("Relationship", "", name, relationship);
+        }
+
+        foreach (var obj in lineageObjects.ToArray())
+        {
+            var raw = obj.SourceObject as Dictionary<string, object>;
+            if (raw == null || obj.ObjectType == "Visual") continue;
+            AddConsumerEdges(obj, raw);
+        }
+
+        foreach (var obj in lineageObjects)
+            obj.DirectUsage = BuildDirectUsage(obj);
+
+        foreach (var obj in lineageObjects)
+        {
+            if (obj.ObjectType == "Visual")
+            {
+                obj.EffectiveUsage = EffectiveUsage.Keep;
+                obj.Reason = "This is a report visual consumer.";
+                obj.Recommendation = "Keep the model objects that feed this visual unless the report visual is removed.";
+                continue;
+            }
+            ClassifyLineageObject(obj, unusedMeasures);
+        }
+
+        foreach (var table in lineageObjects)
+            if (table.ObjectType == "Table") ClassifyTableLineage(table);
+    }
+
+    private LineageObject AddLineageObject(string objectType, string tableName, string name, Dictionary<string, object> raw)
+    {
+        var key = ObjectKey(objectType, tableName, name);
+        LineageObject existing;
+        if (lineageByKey.TryGetValue(key, out existing)) return existing;
+
+        var obj = new LineageObject();
+        obj.Key = key;
+        obj.ObjectType = objectType;
+        obj.TableName = tableName ?? "";
+        obj.Name = string.IsNullOrWhiteSpace(name) ? "(unnamed)" : name;
+        obj.SourceObject = raw;
+        obj.RawProperties = ScalarProperties(raw);
+        obj.SearchText = NormalizeForSearch(objectType + " " + tableName + " " + name + " " + Json.Str(raw, "expression") + " " + Json.Str(raw, "description"));
+        obj.EffectiveUsage = EffectiveUsage.Review;
+        obj.Reason = "Measure Killer did not provide enough lineage to classify this object confidently.";
+        obj.Recommendation = "Review manually before deleting or renaming.";
+        lineageByKey[key] = obj;
+        lineageObjects.Add(obj);
+        return obj;
+    }
+
+    private LineageObject GetOrCreateConsumer(string objectType, string tableName, string name, Dictionary<string, object> raw, EffectiveUsage defaultStatus)
+    {
+        var obj = AddLineageObject(objectType, tableName, name, raw);
+        if (obj.SourceObject == null) obj.SourceObject = raw;
+        if (defaultStatus == EffectiveUsage.Keep && obj.ObjectType == "Visual") obj.EffectiveUsage = EffectiveUsage.Keep;
+        return obj;
+    }
+
+    private void AddConsumerEdges(LineageObject obj, Dictionary<string, object> raw)
+    {
+        AddVisualEdges(obj, raw, "visual_dependencies", LineageEdgeKind.Visual);
+        AddVisualEdges(obj, raw, "visual_level_filters_dependencies", LineageEdgeKind.VisualFilter);
+        AddVisualEdges(obj, raw, "page_level_filters_dependencies", LineageEdgeKind.PageFilter);
+        AddVisualEdges(obj, raw, "report_level_filters_dependencies", LineageEdgeKind.ReportFilter);
+        AddVisualEdges(obj, raw, "visual_calculations_dependencies", LineageEdgeKind.Visual);
+        AddVisualEdges(obj, raw, "mobile_layout_dependencies", LineageEdgeKind.Visual);
+
+        foreach (Dictionary<string, object> dep in Json.Array(raw, "artifact_dependencies"))
+        {
+            var type = FirstNonEmpty(Json.Str(dep, "reference_type"), "Artifact");
+            var table = Json.Str(dep, "table_name");
+            var name = Json.Str(dep, "artifact_name");
+            if (string.IsNullOrWhiteSpace(name)) name = DependencyText(dep, new[] { "report_name", "artifact_name", "reference_type" });
+            var consumerType = type.Equals("Measure", StringComparison.OrdinalIgnoreCase) ? "Measure" : "Artifact";
+            var consumer = GetOrCreateConsumer(consumerType, table, name, dep, EffectiveUsage.Review);
+            AddEdge(obj, consumer, consumerType == "Measure" ? LineageEdgeKind.MeasureDependency : LineageEdgeKind.Artifact, type);
+        }
+
+        foreach (Dictionary<string, object> dep in Json.Array(raw, "relationship_dependencies"))
+        {
+            var name = FirstNonEmpty(Json.Str(dep, "name"), RelationshipName(dep));
+            var consumer = GetOrCreateConsumer("Relationship", "", name, dep, EffectiveUsage.RelationshipOnly);
+            AddEdge(obj, consumer, LineageEdgeKind.Relationship, "Relationship");
+        }
+
+        AddMetadataEdges(obj, raw, "sorting_dependencies", LineageEdgeKind.SortBy, "Sort by");
+        AddMetadataEdges(obj, raw, "hierarchy_dependencies", LineageEdgeKind.Hierarchy, "Hierarchy");
+        AddMetadataEdges(obj, raw, "field_parameter_dependencies", LineageEdgeKind.FieldParameter, "Field parameter");
+        AddMetadataEdges(obj, raw, "calculation_item_dependencies", LineageEdgeKind.CalculationItem, "Calculation item");
+        AddMetadataEdges(obj, raw, "row_level_security_dependencies", LineageEdgeKind.RowLevelSecurity, "RLS");
+        AddMetadataEdges(obj, raw, "model_dependencies", LineageEdgeKind.Unknown, "Model dependency");
+    }
+
+    private void AddVisualEdges(LineageObject obj, Dictionary<string, object> raw, string key, LineageEdgeKind kind)
+    {
+        foreach (Dictionary<string, object> dep in Json.Array(raw, key))
+        {
+            var visualName = VisualName(dep, kind);
+            var visual = GetOrCreateConsumer("Visual", Json.Str(dep, "page"), visualName, dep, EffectiveUsage.Keep);
+            visual.DirectUsage = UsageLabel(kind);
+            AddEdge(obj, visual, kind, UsageLabel(kind));
+        }
+    }
+
+    private void AddMetadataEdges(LineageObject obj, Dictionary<string, object> raw, string key, LineageEdgeKind kind, string label)
+    {
+        foreach (Dictionary<string, object> dep in Json.Array(raw, key))
+        {
+            var name = DependencyText(dep, new[] { "name", "object_name", "hierarchy_name", "level_name", "column", "sorted_column", "table_name" });
+            var consumer = GetOrCreateConsumer(label, Json.Str(dep, "table_name"), name, dep, EffectiveUsage.Review);
+            AddEdge(obj, consumer, kind, label);
+        }
+    }
+
+    private static void AddEdge(LineageObject from, LineageObject to, LineageEdgeKind kind, string label)
+    {
+        if (from == null || to == null) return;
+        foreach (var edge in from.UsedBy)
+            if (edge.ToKey == to.Key && edge.Kind == kind) return;
+        from.UsedBy.Add(new LineageEdge { FromKey = from.Key, ToKey = to.Key, Kind = kind, Label = label });
+    }
+
+    private void ClassifyLineageObject(LineageObject obj, HashSet<string> unusedMeasures)
+    {
+        var raw = obj.SourceObject as Dictionary<string, object>;
+        var isUnused = raw != null && IsUnused(Json.Str(raw, "is_used"));
+        if (ReachesRealConsumer(obj, new HashSet<string>(StringComparer.OrdinalIgnoreCase)))
+        {
+            obj.EffectiveUsage = EffectiveUsage.Keep;
+            obj.Reason = "This object's dependency chain reaches a report visual, report filter, RLS rule, field parameter, calculation item, or external artifact.";
+            obj.Recommendation = "Keep unless you also update the downstream report/model consumers.";
+            return;
+        }
+
+        if (obj.UsedBy.Count > 0 && AllEdgesAre(obj, LineageEdgeKind.Relationship))
+        {
+            obj.EffectiveUsage = EffectiveUsage.RelationshipOnly;
+            obj.Reason = "This object is only consumed by relationships. A relationship by itself is not real report usage.";
+            obj.Recommendation = "Safe only if the connected table island is not needed.";
+            return;
+        }
+
+        if (obj.UsedBy.Count > 0 && OnlyCascadeConsumers(obj, new HashSet<string>(StringComparer.OrdinalIgnoreCase)))
+        {
+            obj.EffectiveUsage = EffectiveUsage.CascadeCandidate;
+            obj.Reason = "This object is only consumed by measures or artifacts that do not reach real report consumers.";
+            obj.Recommendation = "Safe only if removing the dependent unused chain together.";
+            return;
+        }
+
+        if (isUnused || obj.UsedBy.Count == 0)
+        {
+            obj.EffectiveUsage = EffectiveUsage.Unused;
+            obj.Reason = "Measure Killer found no effective model or report consumers for this object.";
+            obj.Recommendation = "Likely safe to remove after confirming it is not used outside the exported report scope.";
+            return;
+        }
+
+        obj.EffectiveUsage = EffectiveUsage.Review;
+        obj.Reason = "The object has model-only or unknown dependencies that do not prove report usage.";
+        obj.Recommendation = "Review the Used By Chain and raw details before changing it.";
+    }
+
+    private void ClassifyTableLineage(LineageObject table)
+    {
+        var children = lineageObjects.Where(o => !ReferenceEquals(o, table) && o.TableName.Equals(table.Name, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (children.Count == 0) return;
+        if (children.Any(o => o.EffectiveUsage == EffectiveUsage.Keep)) return;
+
+        var hasRelationshipOnly = children.Any(o => o.EffectiveUsage == EffectiveUsage.RelationshipOnly || o.ObjectType == "Relationship");
+        var allCleanup = children.All(o =>
+            o.EffectiveUsage == EffectiveUsage.RelationshipOnly ||
+            o.EffectiveUsage == EffectiveUsage.CascadeCandidate ||
+            o.EffectiveUsage == EffectiveUsage.Unused ||
+            o.EffectiveUsage == EffectiveUsage.RelationshipIsland);
+
+        if (hasRelationshipOnly && allCleanup)
+        {
+            table.EffectiveUsage = EffectiveUsage.RelationshipIsland;
+            table.Reason = "No child object reaches real report usage; the remaining usage is relationship-only or cascade-removable.";
+            table.Recommendation = "Candidate for removing the whole relationship/table island together.";
+        }
+    }
+
+    private bool ReachesRealConsumer(LineageObject obj, HashSet<string> visited)
+    {
+        if (obj == null || !visited.Add(obj.Key)) return false;
+        foreach (var edge in obj.UsedBy)
+        {
+            if (IsRealConsumer(edge.Kind)) return true;
+            LineageObject next;
+            if (lineageByKey.TryGetValue(edge.ToKey, out next) && ReachesRealConsumer(next, visited)) return true;
+        }
+        return false;
+    }
+
+    private bool OnlyCascadeConsumers(LineageObject obj, HashSet<string> visited)
+    {
+        if (obj == null || !visited.Add(obj.Key)) return true;
+        if (obj.UsedBy.Count == 0) return true;
+        foreach (var edge in obj.UsedBy)
+        {
+            if (IsRealConsumer(edge.Kind) || edge.Kind == LineageEdgeKind.Relationship) return false;
+            if (edge.Kind != LineageEdgeKind.MeasureDependency && edge.Kind != LineageEdgeKind.Artifact && edge.Kind != LineageEdgeKind.Unknown) return false;
+            LineageObject next;
+            if (lineageByKey.TryGetValue(edge.ToKey, out next) && !OnlyCascadeConsumers(next, visited)) return false;
+        }
+        return true;
+    }
+
+    private static bool IsRealConsumer(LineageEdgeKind kind)
+    {
+        return kind == LineageEdgeKind.Visual ||
+               kind == LineageEdgeKind.VisualFilter ||
+               kind == LineageEdgeKind.PageFilter ||
+               kind == LineageEdgeKind.ReportFilter ||
+               kind == LineageEdgeKind.RowLevelSecurity ||
+               kind == LineageEdgeKind.FieldParameter ||
+               kind == LineageEdgeKind.CalculationItem ||
+               kind == LineageEdgeKind.Artifact;
+    }
+
+    private static bool AllEdgesAre(LineageObject obj, LineageEdgeKind kind)
+    {
+        if (obj.UsedBy.Count == 0) return false;
+        foreach (var edge in obj.UsedBy)
+            if (edge.Kind != kind) return false;
+        return true;
+    }
+
+    private void PopulateTableFilter()
+    {
+        cboTable.Items.Clear();
+        cboTable.Items.Add("All tables");
+        foreach (var table in lineageObjects.Where(o => o.ObjectType == "Table").Select(o => o.Name).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x))
+            cboTable.Items.Add(table);
+        cboTable.SelectedIndex = 0;
+    }
+
+    private void ApplyFilters()
+    {
+        if (gridObjects == null) return;
+        var searchTerms = Terms(txtFilter.Text);
+        var status = Convert.ToString(cboStatus.SelectedItem ?? "All");
+        var type = Convert.ToString(cboObjectType.SelectedItem ?? "All");
+        var table = Convert.ToString(cboTable.SelectedItem ?? "All tables");
+        var selectedTerms = chkSelectedObject.Checked ? GetSelectedObjectTerms() : new List<string[]>();
+
+        gridObjects.Rows.Clear();
+        foreach (var obj in lineageObjects)
+        {
+            if (!StatusMatches(obj, status)) continue;
+            if (type != "All" && !obj.ObjectType.Equals(type, StringComparison.OrdinalIgnoreCase)) continue;
+            if (table != "All tables" && !obj.TableName.Equals(table, StringComparison.OrdinalIgnoreCase) && !(obj.ObjectType == "Table" && obj.Name.Equals(table, StringComparison.OrdinalIgnoreCase))) continue;
+            if (searchTerms.Length > 0 && !ContainsAllTerms(obj.SearchText, searchTerms)) continue;
+            if (selectedTerms.Count > 0 && !SelectedTermsMatch(obj, selectedTerms)) continue;
+
+            var index = gridObjects.Rows.Add(
+                UsageLabel(obj.EffectiveUsage),
+                obj.ObjectType,
+                obj.TableName,
+                obj.Name,
+                obj.DirectUsage,
+                obj.UsedBy.Count,
+                obj.Reason);
+            var row = gridObjects.Rows[index];
+            row.Tag = obj;
+            row.DefaultCellStyle.BackColor = BackColorForUsage(obj.EffectiveUsage);
+            row.DefaultCellStyle.ForeColor = Color.Black;
+        }
+        UpdateStatusCounts();
+        if (gridObjects.Rows.Count > 0 && gridObjects.CurrentCell == null)
+            gridObjects.CurrentCell = gridObjects.Rows[0].Cells[0];
+        UpdateSelectedObjectDetails();
+    }
+
+    private static bool StatusMatches(LineageObject obj, string status)
+    {
+        return status == "All" || UsageLabel(obj.EffectiveUsage).Equals(status, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SelectedTermsMatch(LineageObject obj, List<string[]> selectedTerms)
+    {
+        foreach (var terms in selectedTerms)
+            if (ContainsAllTerms(obj.SearchText, terms)) return true;
+        return false;
+    }
+
+    private void UpdateStatusCounts()
+    {
+        foreach (var pair in statusCountLabels)
+        {
+            var count = lineageObjects.Count(o => o.EffectiveUsage == pair.Key);
+            pair.Value.Text = Convert.ToString(pair.Value.Tag) + ": " + count;
+        }
+    }
+
+    private LineageObject SelectedLineageObject()
+    {
+        if (gridObjects.SelectedRows.Count == 0) return null;
+        return gridObjects.SelectedRows[0].Tag as LineageObject;
+    }
+
+    private void UpdateSelectedObjectDetails()
+    {
+        var obj = SelectedLineageObject();
+        if (obj == null)
+        {
+            txtSummary.Text = "";
+            txtRaw.Text = "";
+            tree.Nodes.Clear();
+            UpdateVisualPreview((LineageObject)null);
+            return;
+        }
+
+        txtSummary.Text = BuildSummaryText(obj);
+        txtRaw.Text = chkFullDetails.Checked ? RawDetails(obj) : "Enable Show full details to inspect the raw JSON fields.";
+        BuildUsedByTree(obj);
+        UpdateVisualPreview(obj);
+    }
+
+    private void UpdatePreviewFromUsedByTreeSelection()
+    {
+        var node = tree.SelectedNode;
+        var obj = node == null ? null : node.Tag as LineageObject;
+        if (obj == null) return;
+        UpdateVisualPreview(obj);
+    }
+
+    private void UpdateVisualPreview(LineageObject obj)
+    {
+        visualBoxes.Clear();
+        if (obj != null) CollectVisualBoxes(obj.SourceObject, visualBoxes);
+        visualPreview.Visible = visualBoxes.Count > 0;
+        visualPreviewRow.Height = visualBoxes.Count > 0 ? 190 : 0;
+        visualPreview.Invalidate();
+    }
+
+    private string BuildSummaryText(LineageObject obj)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Object");
+        builder.AppendLine("------");
+        builder.AppendLine(obj.ObjectType + " / " + (string.IsNullOrWhiteSpace(obj.TableName) ? "" : obj.TableName + " / ") + obj.Name);
+        builder.AppendLine();
+        builder.AppendLine("Status");
+        builder.AppendLine("------");
+        builder.AppendLine(UsageLabel(obj.EffectiveUsage));
+        builder.AppendLine();
+        builder.AppendLine("Recommendation");
+        builder.AppendLine("--------------");
+        builder.AppendLine(WrapText(obj.Recommendation, 110));
+        builder.AppendLine();
+        builder.AppendLine("Reason");
+        builder.AppendLine("------");
+        builder.AppendLine(WrapText(obj.Reason, 110));
+        builder.AppendLine();
+        builder.AppendLine("Direct usage");
+        builder.AppendLine("------------");
+        builder.AppendLine(obj.DirectUsage);
+        builder.AppendLine("Used by: " + obj.UsedBy.Count);
+        builder.AppendLine();
+        builder.AppendLine("Lineage");
+        builder.AppendLine("-------");
+        AppendLineageSummary(builder, obj, new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0);
+        return builder.ToString();
+    }
+
+    private void AppendLineageSummary(StringBuilder builder, LineageObject obj, HashSet<string> visited, int depth)
+    {
+        if (!visited.Add(obj.Key)) return;
+        if (depth == 0) builder.AppendLine(obj.Name);
+        if (obj.UsedBy.Count == 0)
+        {
+            builder.AppendLine("-> No real report consumers found");
+            return;
+        }
+        foreach (var edge in obj.UsedBy)
+        {
+            LineageObject next;
+            if (!lineageByKey.TryGetValue(edge.ToKey, out next)) continue;
+            builder.AppendLine(new string(' ', Math.Min(depth + 1, 8) * 2) + "-> " + next.Name);
+            if (depth < 6) AppendLineageSummary(builder, next, visited, depth + 1);
+        }
+    }
+
+    private void BuildUsedByTree(LineageObject obj)
+    {
+        tree.BeginUpdate();
+        tree.Nodes.Clear();
+        var root = new TreeNode(NodeText(obj));
+        root.Tag = obj;
+        root.BackColor = BackColorForUsage(obj.EffectiveUsage);
+        root.ForeColor = Color.Black;
+        tree.Nodes.Add(root);
+        AddUsedByNodes(root, obj, new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0);
+        root.Expand();
+        tree.EndUpdate();
+    }
+
+    private void AddUsedByNodes(TreeNode parent, LineageObject obj, HashSet<string> visited, int depth)
+    {
+        if (!visited.Add(obj.Key) || depth > 8) return;
+        if (obj.UsedBy.Count == 0)
+        {
+            parent.Nodes.Add(new TreeNode("[UNUSED] No real report consumers found"));
+            return;
+        }
+        foreach (var edge in obj.UsedBy)
+        {
+            LineageObject next;
+            if (!lineageByKey.TryGetValue(edge.ToKey, out next)) continue;
+            var node = new TreeNode(NodeText(next));
+            node.Tag = next;
+            node.ToolTipText = next.ObjectType + " / " + next.TableName + " / " + next.Name + "\r\n" + next.Reason;
+            node.BackColor = BackColorForUsage(next.EffectiveUsage);
+            node.ForeColor = Color.Black;
+            parent.Nodes.Add(node);
+            AddUsedByNodes(node, next, visited, depth + 1);
+        }
+    }
+
+    private string RawDetails(LineageObject obj)
+    {
+        var builder = new StringBuilder();
+        if (obj.SourceObject != null) AppendValue(builder, obj.SourceObject, 0);
+        return builder.ToString();
+    }
+
+    private void CopySelectedObjectName()
+    {
+        var obj = SelectedLineageObject();
+        if (obj != null) Clipboard.SetText(obj.Name);
+    }
+
+    private void CopySelectedLineage()
+    {
+        var obj = SelectedLineageObject();
+        if (obj != null) Clipboard.SetText(BuildSummaryText(obj));
+    }
+
+    private void CopySelectedRecommendation()
+    {
+        var obj = SelectedLineageObject();
+        if (obj != null) Clipboard.SetText(obj.ObjectType + " / " + obj.TableName + " / " + obj.Name + "\r\n" + UsageLabel(obj.EffectiveUsage) + "\r\n" + obj.Recommendation + "\r\n" + obj.Reason);
+    }
+
+    private void FilterToSelectedTable()
+    {
+        var obj = SelectedLineageObject();
+        if (obj == null || string.IsNullOrWhiteSpace(obj.TableName)) return;
+        cboTable.SelectedItem = obj.TableName;
+    }
+
+    private void FilterToSelectedStatus()
+    {
+        var obj = SelectedLineageObject();
+        if (obj == null) return;
+        cboStatus.SelectedItem = UsageLabel(obj.EffectiveUsage);
+    }
+
+    private static Dictionary<string, string> ScalarProperties(Dictionary<string, object> raw)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (raw == null) return result;
+        foreach (var pair in raw)
+            if (!(pair.Value is Dictionary<string, object>) && !(pair.Value is ArrayList))
+                result[pair.Key] = pair.Value == null ? "" : Convert.ToString(pair.Value);
+        return result;
+    }
+
+    private static string ObjectKey(string type, string table, string name)
+    {
+        return (type ?? "") + "|" + (table ?? "") + "|" + (name ?? "");
+    }
+
+    private static string RelationshipName(Dictionary<string, object> dep)
+    {
+        return FirstNonEmpty(Json.Str(dep, "from_column"), Json.Str(dep, "column1")) + " -> " + FirstNonEmpty(Json.Str(dep, "to_column"), Json.Str(dep, "column2"));
+    }
+
+    private static string VisualName(Dictionary<string, object> dep, LineageEdgeKind kind)
+    {
+        var title = Json.Str(dep, "visual_title");
+        if (string.IsNullOrWhiteSpace(title)) title = Json.Str(dep, "visual_type");
+        if (string.IsNullOrWhiteSpace(title)) title = Json.Str(dep, "visual_id");
+        return FirstNonEmpty(Json.Str(dep, "page"), Json.Str(dep, "report_name")) + " / " + UsageLabel(kind) + " / " + title;
+    }
+
+    private static string BuildDirectUsage(LineageObject obj)
+    {
+        var raw = obj.SourceObject as Dictionary<string, object>;
+        if (raw == null) return obj.DirectUsage ?? "";
+        return "Measure Killer is_used: " + FirstNonEmpty(Json.Str(raw, "is_used"), Json.Str(raw, "status"), "(blank)") +
+               "; Visual dependencies: " + Json.Array(raw, "visual_dependencies").Count +
+               "; Measure/artifact dependencies: " + Json.Array(raw, "artifact_dependencies").Count +
+               "; Relationship dependencies: " + Json.Array(raw, "relationship_dependencies").Count;
+    }
+
+    private static string NodeText(LineageObject obj)
+    {
+        return "[" + Prefix(obj.EffectiveUsage) + "] " + obj.Name;
+    }
+
+    private static string Prefix(EffectiveUsage usage)
+    {
+        switch (usage)
+        {
+            case EffectiveUsage.Keep: return "KEEP";
+            case EffectiveUsage.CascadeCandidate: return "CASCADE";
+            case EffectiveUsage.RelationshipOnly: return "REL";
+            case EffectiveUsage.RelationshipIsland: return "ISLAND";
+            case EffectiveUsage.Unused: return "UNUSED";
+            default: return "REVIEW";
+        }
+    }
+
+    private static string UsageLabel(EffectiveUsage usage)
+    {
+        switch (usage)
+        {
+            case EffectiveUsage.Keep: return "Keep";
+            case EffectiveUsage.CascadeCandidate: return "Cascade candidate";
+            case EffectiveUsage.RelationshipOnly: return "Relationship only";
+            case EffectiveUsage.RelationshipIsland: return "Relationship island";
+            case EffectiveUsage.Unused: return "Unused";
+            default: return "Review";
+        }
+    }
+
+    private static string UsageLabel(LineageEdgeKind kind)
+    {
+        switch (kind)
+        {
+            case LineageEdgeKind.Visual: return "Visual";
+            case LineageEdgeKind.VisualFilter: return "Visual filter";
+            case LineageEdgeKind.PageFilter: return "Page filter";
+            case LineageEdgeKind.ReportFilter: return "Report filter";
+            case LineageEdgeKind.Relationship: return "Relationship";
+            case LineageEdgeKind.MeasureDependency: return "Measure dependency";
+            case LineageEdgeKind.SortBy: return "Sort by";
+            case LineageEdgeKind.Hierarchy: return "Hierarchy";
+            case LineageEdgeKind.FieldParameter: return "Field parameter";
+            case LineageEdgeKind.CalculationItem: return "Calculation item";
+            case LineageEdgeKind.RowLevelSecurity: return "RLS";
+            case LineageEdgeKind.Artifact: return "Artifact";
+            default: return "Unknown";
+        }
+    }
+
+    private static Color BackColorForUsage(EffectiveUsage usage)
+    {
+        switch (usage)
+        {
+            case EffectiveUsage.Keep: return Color.Honeydew;
+            case EffectiveUsage.CascadeCandidate: return Color.LemonChiffon;
+            case EffectiveUsage.RelationshipOnly: return Color.LightYellow;
+            case EffectiveUsage.RelationshipIsland: return Color.AliceBlue;
+            case EffectiveUsage.Unused: return Color.MistyRose;
+            default: return Color.Gainsboro;
         }
     }
 
@@ -638,25 +1387,39 @@ internal class MeasureKillerViewerForm : Form
         return values.Count == 0 ? "(dependency)" : string.Join(" / ", values.ToArray());
     }
 
-    private void RenderTree()
+    private void RenderTree(bool expandVisible, bool scrollToRoot)
     {
-        var expanded = GetExpandedNodePaths(tree.Nodes);
+        RememberCurrentExpansion();
+        var selectedPath = tree.SelectedNode == null ? "" : tree.SelectedNode.Name;
+
+        suppressExpansionTracking = true;
         tree.BeginUpdate();
-        tree.Nodes.Clear();
-        var textTerms = Terms(txtFilter.Text);
-        var selectedTerms = GetSelectedObjectTerms();
-        foreach (var root in allRoots)
+        try
         {
-            var node = BuildTreeNode(root, expanded, textTerms, selectedTerms, false);
-            if (node != null) tree.Nodes.Add(node);
+            tree.Nodes.Clear();
+            var textTerms = Terms(txtFilter.Text);
+            var selectedTerms = GetSelectedObjectTerms();
+            foreach (var root in allRoots)
+            {
+                var node = BuildTreeNode(root, rememberedExpandedPaths, textTerms, selectedTerms, false);
+                if (node != null) tree.Nodes.Add(node);
+            }
+            if (expandVisible || expandAfterSelectionChange)
+            {
+                tree.ExpandAll();
+                RememberCurrentExpansion();
+                expandAfterSelectionChange = false;
+            }
+            if (!string.IsNullOrEmpty(selectedPath)) SelectNodeByPath(tree.Nodes, selectedPath);
         }
-        if (expandAfterSelectionChange)
+        finally
         {
-            tree.ExpandAll();
-            expandAfterSelectionChange = false;
+            tree.EndUpdate();
+            suppressExpansionTracking = false;
         }
-        tree.EndUpdate();
-        ScrollTreeToRoot();
+
+        if (scrollToRoot) ScrollTreeToRoot();
+        else if (tree.SelectedNode != null) tree.SelectedNode.EnsureVisible();
     }
 
     private void ScrollTreeToRoot()
@@ -791,6 +1554,33 @@ internal class MeasureKillerViewerForm : Form
         }
     }
 
+    private void RememberCurrentExpansion()
+    {
+        foreach (var path in GetExpandedNodePaths(tree.Nodes))
+            rememberedExpandedPaths.Add(path);
+    }
+
+    private void RemoveRememberedExpansion(TreeNode node)
+    {
+        if (node == null) return;
+        if (!string.IsNullOrEmpty(node.Name)) rememberedExpandedPaths.Remove(node.Name);
+        foreach (TreeNode child in node.Nodes) RemoveRememberedExpansion(child);
+    }
+
+    private static bool SelectNodeByPath(TreeNodeCollection nodes, string path)
+    {
+        foreach (TreeNode node in nodes)
+        {
+            if (string.Equals(node.Name, path, StringComparison.Ordinal))
+            {
+                node.TreeView.SelectedNode = node;
+                return true;
+            }
+            if (SelectNodeByPath(node.Nodes, path)) return true;
+        }
+        return false;
+    }
+
     private void OpenJson()
     {
         if (File.Exists(JsonPath)) System.Diagnostics.Process.Start("notepad.exe", JsonPath);
@@ -845,6 +1635,167 @@ internal class MeasureKillerViewerForm : Form
         txtDetails.Text = builder.ToString();
         txtDetails.SelectionStart = 0;
         txtDetails.SelectionLength = 0;
+        UpdateVisualPreview(node);
+    }
+
+    private void UpdateVisualPreview(MkNode node)
+    {
+        visualBoxes.Clear();
+        if (node != null) CollectVisualBoxes(node.SourceObject, visualBoxes);
+
+        var hasVisuals = visualBoxes.Count > 0;
+        visualPreview.Visible = hasVisuals;
+        visualPreviewRow.Height = hasVisuals ? 190 : 0;
+        visualPreview.Invalidate();
+    }
+
+    private static void CollectVisualBoxes(object source, List<VisualBox> target)
+    {
+        var dict = source as Dictionary<string, object>;
+        if (dict == null) return;
+
+        var direct = TryCreateVisualBox(dict);
+        if (direct != null)
+        {
+            target.Add(direct);
+            return;
+        }
+
+        foreach (Dictionary<string, object> visual in Json.Array(dict, "visual_dependencies"))
+        {
+            var box = TryCreateVisualBox(visual);
+            if (box != null) target.Add(box);
+        }
+    }
+
+    private static VisualBox TryCreateVisualBox(Dictionary<string, object> dict)
+    {
+        var coordinates = Json.Str(dict, "coordinates");
+        var hasVisualIdentity =
+            !string.IsNullOrWhiteSpace(Json.Str(dict, "visual_id")) ||
+            !string.IsNullOrWhiteSpace(Json.Str(dict, "visual_type")) ||
+            !string.IsNullOrWhiteSpace(Json.Str(dict, "used_as"));
+        if (!hasVisualIdentity) return null;
+
+        double x;
+        double y;
+        if (!TryReadCoordinate(coordinates, "x", out x)) x = ReadDouble(dict, "x", 0);
+        if (!TryReadCoordinate(coordinates, "y", out y)) y = ReadDouble(dict, "y", 0);
+
+        var width = ReadDouble(dict, "width", 0);
+        var height = ReadDouble(dict, "height", 0);
+        if (width <= 0 || height <= 0) return null;
+
+        var title = Json.Str(dict, "visual_title");
+        if (string.IsNullOrWhiteSpace(title)) title = Json.Str(dict, "visual_type");
+        if (string.IsNullOrWhiteSpace(title)) title = Json.Str(dict, "visual_id");
+
+        return new VisualBox
+        {
+            X = x,
+            Y = y,
+            Width = width,
+            Height = height,
+            Title = title,
+            Page = Json.Str(dict, "page"),
+            UsedAs = Json.Str(dict, "used_as")
+        };
+    }
+
+    private static bool TryReadCoordinate(string coordinates, string key, out double value)
+    {
+        value = 0;
+        if (string.IsNullOrWhiteSpace(coordinates)) return false;
+        var parts = coordinates.Split(',');
+        foreach (var part in parts)
+        {
+            var pair = part.Split('=');
+            if (pair.Length != 2) continue;
+            if (!pair[0].Trim().Equals(key, StringComparison.OrdinalIgnoreCase)) continue;
+            return TryParseDouble(pair[1], out value);
+        }
+        return false;
+    }
+
+    private static double ReadDouble(Dictionary<string, object> dict, string key, double defaultValue)
+    {
+        if (!dict.ContainsKey(key) || dict[key] == null) return defaultValue;
+        double result;
+        return TryParseDouble(Convert.ToString(dict[key]), out result) ? result : defaultValue;
+    }
+
+    private static bool TryParseDouble(string value, out double result)
+    {
+        result = 0;
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var normalized = value.Trim().Replace(',', '.');
+        return double.TryParse(normalized, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out result);
+    }
+
+    private void PaintVisualPreview(object sender, PaintEventArgs e)
+    {
+        e.Graphics.Clear(Color.White);
+        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        using (var textBrush = new SolidBrush(Color.DimGray))
+        using (var pagePen = new Pen(Color.Silver))
+        using (var visualBrush = new SolidBrush(Color.FromArgb(80, Color.Plum)))
+        using (var visualPen = new Pen(Color.Indigo, 2f))
+        using (var font = new Font("Segoe UI", 8f))
+        {
+            e.Graphics.DrawString("Visual coordinates", font, textBrush, new PointF(8, 7));
+            if (visualBoxes.Count == 0) return;
+
+            var bounds = GetVisualBounds(visualBoxes);
+            if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+            var canvas = new RectangleF(8, 26, visualPreview.ClientSize.Width - 16, visualPreview.ClientSize.Height - 34);
+            if (canvas.Width <= 10 || canvas.Height <= 10) return;
+
+            var scale = Math.Min(canvas.Width / (float)bounds.Width, canvas.Height / (float)bounds.Height);
+            var pageWidth = (float)bounds.Width * scale;
+            var pageHeight = (float)bounds.Height * scale;
+            var page = new RectangleF(
+                canvas.Left + (canvas.Width - pageWidth) / 2f,
+                canvas.Top + (canvas.Height - pageHeight) / 2f,
+                pageWidth,
+                pageHeight);
+            e.Graphics.DrawRectangle(pagePen, page.X, page.Y, page.Width, page.Height);
+
+            foreach (var box in visualBoxes)
+            {
+                var rect = new RectangleF(
+                    page.Left + (float)(box.X - bounds.X) * scale,
+                    page.Top + (float)(box.Y - bounds.Y) * scale,
+                    Math.Max(2f, (float)box.Width * scale),
+                    Math.Max(2f, (float)box.Height * scale));
+                e.Graphics.FillRectangle(visualBrush, rect);
+                e.Graphics.DrawRectangle(visualPen, rect.X, rect.Y, rect.Width, rect.Height);
+                var label = string.IsNullOrWhiteSpace(box.UsedAs) ? box.Title : box.Title + " / " + box.UsedAs;
+                if (!string.IsNullOrWhiteSpace(label))
+                    e.Graphics.DrawString(label, font, Brushes.Black, new RectangleF(rect.Left + 3, rect.Top + 3, Math.Max(30, rect.Width - 6), Math.Max(14, rect.Height - 6)));
+            }
+        }
+    }
+
+    private static RectangleF GetVisualBounds(List<VisualBox> boxes)
+    {
+        var left = double.MaxValue;
+        var top = double.MaxValue;
+        var right = double.MinValue;
+        var bottom = double.MinValue;
+
+        foreach (var box in boxes)
+        {
+            left = Math.Min(left, box.X);
+            top = Math.Min(top, box.Y);
+            right = Math.Max(right, box.X + box.Width);
+            bottom = Math.Max(bottom, box.Y + box.Height);
+        }
+
+        if (left == double.MaxValue) return RectangleF.Empty;
+        if (left > 0) left = 0;
+        if (top > 0) top = 0;
+        return new RectangleF((float)left, (float)top, (float)(right - left), (float)(bottom - top));
     }
 
     private static void AppendLineageDetails(StringBuilder builder, object source)
@@ -1000,7 +1951,7 @@ internal class MeasureKillerViewerForm : Form
         if (chkSelectedObject.Checked)
         {
             expandAfterSelectionChange = true;
-            RenderTree();
+            ApplyFilters();
         }
     }
 
@@ -1142,6 +2093,57 @@ internal class MeasureKillerViewerForm : Form
     }
 }
 
+internal enum EffectiveUsage
+{
+    Keep,
+    CascadeCandidate,
+    RelationshipOnly,
+    RelationshipIsland,
+    Unused,
+    Review
+}
+
+internal enum LineageEdgeKind
+{
+    MeasureDependency,
+    Visual,
+    VisualFilter,
+    PageFilter,
+    ReportFilter,
+    Relationship,
+    SortBy,
+    Hierarchy,
+    FieldParameter,
+    CalculationItem,
+    RowLevelSecurity,
+    Artifact,
+    Unknown
+}
+
+internal class LineageObject
+{
+    public string Key;
+    public string ObjectType;
+    public string TableName;
+    public string Name;
+    public string DirectUsage;
+    public EffectiveUsage EffectiveUsage;
+    public string Reason;
+    public string Recommendation;
+    public string SearchText;
+    public object SourceObject;
+    public List<LineageEdge> UsedBy = new List<LineageEdge>();
+    public Dictionary<string, string> RawProperties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+}
+
+internal class LineageEdge
+{
+    public string FromKey;
+    public string ToKey;
+    public LineageEdgeKind Kind;
+    public string Label;
+}
+
 internal enum ImpactKind
 {
     Neutral,
@@ -1196,6 +2198,17 @@ internal class MkNode
         Children.Add(child);
         return child;
     }
+}
+
+internal class VisualBox
+{
+    public double X;
+    public double Y;
+    public double Width;
+    public double Height;
+    public string Title;
+    public string Page;
+    public string UsedAs;
 }
 
 internal static class Json

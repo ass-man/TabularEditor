@@ -41,3 +41,20 @@
   - Selected-object expansion still shows descendants, but impact and object-type checkboxes are applied to those descendants.
   - The detail pane now wraps text, uses a narrower right-side split, defaults to lineage-related fields/dependency arrays, and exposes a `Full details` checkbox for the raw JSON object.
   - Verified focused plugin tests in `bin\Debug`; the full test suite still needs `TE_TestServer` for AS-engine integration tests.
+- Visual coordinate preview:
+  - Added a bottom preview area to the detail pane that appears when the selected node contains visual coordinates.
+  - The preview scales Power BI visual `x`, `y`, `width`, and `height` values into a page outline and draws boxes with visual labels.
+  - Verified focused plugin tests in `bin\Debug` and copied the updated script back into the Debug plugin folder after running `build.ps1`.
+- Filter expansion behavior:
+  - Filter text and checkbox changes now auto-expand the visible filtered tree.
+  - Tree rendering no longer selects the root after every filter change, and expansion paths are remembered outside the currently visible filter result.
+  - `bin\CodexDebug` Measure Killer parser test passed; the `bin\Debug` plugin-loader test was blocked by duplicate `TOMWrapper` assembly imports in the Debug runtime folder.
+- Lineage-first redesign:
+  - Replaced the primary raw tree UI with a SplitContainer: left `DataGridView` decision list and right `TabControl` with Summary, Used By Chain, and Raw Details.
+  - Added `EffectiveUsage`, `LineageObject`, `LineageEdge`, and `LineageEdgeKind` model types to classify Keep, Cascade candidate, Relationship only, Relationship island, Unused, and Review.
+  - Replaced many impact checkboxes with Search, Status, Object Type, Table, Selected object only, and Show full details controls.
+  - Added status count strip, row status colors, grid context menu actions, structured summary text, and short prefixed used-by chain nodes.
+  - Verified targeted plugin tests in `bin\CodexDebug`; ran `build.ps1` successfully and copied the updated script to the Debug plugin folder.
+- Visual preview placement:
+  - Moved the visual coordinate preview out of the Summary tab into a shared bottom area under the right-side tabs.
+  - Clicking a visual node in Used By Chain now updates the coordinate preview without replacing the selected grid object's summary.
