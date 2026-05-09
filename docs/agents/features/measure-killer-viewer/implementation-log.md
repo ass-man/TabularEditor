@@ -58,3 +58,6 @@
 - Visual preview placement:
   - Moved the visual coordinate preview out of the Summary tab into a shared bottom area under the right-side tabs.
   - Clicking a visual node in Used By Chain now updates the coordinate preview without replacing the selected grid object's summary.
+- Selected object filter:
+  - Changed `Selected object only` from a direct text match to lineage key resolution plus recursive traversal of `UsedBy` edges.
+  - Filtering from the main Tabular Editor selection now shows the selected object and every object/report consumer that references it.

@@ -725,7 +725,7 @@ internal class MeasureKillerViewerForm : Form
         var status = Convert.ToString(cboStatus.SelectedItem ?? "All");
         var type = Convert.ToString(cboObjectType.SelectedItem ?? "All");
         var table = Convert.ToString(cboTable.SelectedItem ?? "All tables");
-        var selectedTerms = chkSelectedObject.Checked ? GetSelectedObjectTerms() : new List<string[]>();
+        var selectedKeys = chkSelectedObject.Checked ? GetSelectedAffectedKeys() : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         gridObjects.Rows.Clear();
         foreach (var obj in lineageObjects)
@@ -734,7 +734,7 @@ internal class MeasureKillerViewerForm : Form
             if (type != "All" && !obj.ObjectType.Equals(type, StringComparison.OrdinalIgnoreCase)) continue;
             if (table != "All tables" && !obj.TableName.Equals(table, StringComparison.OrdinalIgnoreCase) && !(obj.ObjectType == "Table" && obj.Name.Equals(table, StringComparison.OrdinalIgnoreCase))) continue;
             if (searchTerms.Length > 0 && !ContainsAllTerms(obj.SearchText, searchTerms)) continue;
-            if (selectedTerms.Count > 0 && !SelectedTermsMatch(obj, selectedTerms)) continue;
+            if (selectedKeys.Count > 0 && !selectedKeys.Contains(obj.Key)) continue;
 
             var index = gridObjects.Rows.Add(
                 UsageLabel(obj.EffectiveUsage),
@@ -758,13 +758,6 @@ internal class MeasureKillerViewerForm : Form
     private static bool StatusMatches(LineageObject obj, string status)
     {
         return status == "All" || UsageLabel(obj.EffectiveUsage).Equals(status, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool SelectedTermsMatch(LineageObject obj, List<string[]> selectedTerms)
-    {
-        foreach (var terms in selectedTerms)
-            if (ContainsAllTerms(obj.SearchText, terms)) return true;
-        return false;
     }
 
     private void UpdateStatusCounts()
@@ -2020,6 +2013,66 @@ internal class MeasureKillerViewerForm : Form
             if (distinct.Length > 0) result.Add(distinct);
         }
         return result;
+    }
+
+    private HashSet<string> GetSelectedAffectedKeys()
+    {
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var selected in GetSelectedObjects())
+        {
+            foreach (var key in ResolveSelectedLineageKeys(selected))
+                AddAffectedKeys(key, result);
+        }
+        return result;
+    }
+
+    private IEnumerable<string> ResolveSelectedLineageKeys(object selected)
+    {
+        var objectType = GetProperty(selected, "ObjectType");
+        var name = GetProperty(selected, "Name");
+        var table = GetPropertyObject(selected, "Table");
+        var tableName = GetProperty(table, "Name");
+
+        var keys = new List<string>();
+        AddResolvedKey(keys, objectType, tableName, name);
+        AddResolvedKey(keys, objectType, "", name);
+
+        if (objectType.Equals("Table", StringComparison.OrdinalIgnoreCase))
+        {
+            AddResolvedKey(keys, "Table", "", name);
+            AddResolvedKey(keys, "Table", name, name);
+        }
+
+        if (objectType.Equals("Measure", StringComparison.OrdinalIgnoreCase)) AddResolvedKey(keys, "Measure", tableName, name);
+        if (objectType.Equals("Column", StringComparison.OrdinalIgnoreCase)) AddResolvedKey(keys, "Column", tableName, name);
+        if (objectType.Equals("Relationship", StringComparison.OrdinalIgnoreCase)) AddResolvedKey(keys, "Relationship", "", name);
+
+        var fullName = GetProperty(selected, "DaxObjectFullName");
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            foreach (var obj in lineageObjects)
+                if (fullName.IndexOf(obj.Name, StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    (string.IsNullOrWhiteSpace(obj.TableName) || fullName.IndexOf(obj.TableName, StringComparison.OrdinalIgnoreCase) >= 0))
+                    keys.Add(obj.Key);
+        }
+
+        return keys.Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void AddResolvedKey(List<string> keys, string objectType, string tableName, string name)
+    {
+        if (string.IsNullOrWhiteSpace(objectType) || string.IsNullOrWhiteSpace(name)) return;
+        var key = ObjectKey(objectType, tableName, name);
+        if (lineageByKey.ContainsKey(key)) keys.Add(key);
+    }
+
+    private void AddAffectedKeys(string key, HashSet<string> result)
+    {
+        if (string.IsNullOrWhiteSpace(key) || !result.Add(key)) return;
+        LineageObject obj;
+        if (!lineageByKey.TryGetValue(key, out obj)) return;
+        foreach (var edge in obj.UsedBy)
+            AddAffectedKeys(edge.ToKey, result);
     }
 
     private static object GetPropertyObject(object instance, string propertyName)
