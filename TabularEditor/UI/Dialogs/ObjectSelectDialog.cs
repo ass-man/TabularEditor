@@ -314,7 +314,7 @@ namespace TabularEditor.UI.Dialogs
         }
     }
 
-    public class RelationshipColumnSelectDialog : ObjectSelectDialog<Column>, ICustomEditor
+    public class RelationshipColumnSelectDialog : ObjectSelectDialog<Column>, ICustomDropDownEditor
     {
         public RelationshipColumnSelectDialog() : base(multiSelect: false, allowNoSelection: true)
         {
@@ -377,6 +377,104 @@ namespace TabularEditor.UI.Dialogs
 
             cancel = false;
             return SelectedObject;
+        }
+
+        public Control CreateDropDownControl(object instance, string property, object value, Action<object> valueSelected, Action closeDropDown)
+        {
+            var relationship = instance as SingleColumnRelationship ?? (instance as object[])?.FirstOrDefault() as SingleColumnRelationship;
+            if (relationship == null) return new Panel();
+
+            var fromColumn = relationship.FromColumn;
+            var toColumn = relationship.ToColumn;
+            var prioritizeByFromName = property == nameof(SingleColumnRelationship.ToColumn)
+                && toColumn == null
+                && fromColumn != null;
+
+            Func<Column, bool> highlightPredicate = c => prioritizeByFromName && c != fromColumn && c.Name == fromColumn.Name;
+
+            var columns = relationship.Model.Tables.SelectMany(t => t.Columns);
+            if (property == nameof(SingleColumnRelationship.ToColumn) && fromColumn != null)
+                columns = columns.Where(c => c != fromColumn);
+            else if (property == nameof(SingleColumnRelationship.FromColumn) && toColumn != null)
+                columns = columns.Where(c => c != toColumn);
+
+            columns = prioritizeByFromName
+                ? columns.OrderByDescending(highlightPredicate).ThenBy(c => c.DaxObjectFullName)
+                : columns.OrderBy(c => c.DaxObjectFullName);
+
+            var allColumns = columns.ToList();
+            var panel = new Panel { Width = 360, Height = 260 };
+            var searchBox = new TextBox { Dock = DockStyle.Top };
+            var listBox = new ListBox { Dock = DockStyle.Fill, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed };
+
+            panel.Controls.Add(listBox);
+            panel.Controls.Add(searchBox);
+
+            Action applyFilter = () =>
+            {
+                var filter = searchBox.Text.Trim();
+                listBox.BeginUpdate();
+                listBox.Items.Clear();
+                foreach (var column in allColumns.Where(c => filter.Length == 0 || c.DaxObjectFullName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0))
+                    listBox.Items.Add(column);
+                if (listBox.Items.Count > 0) listBox.SelectedIndex = 0;
+                listBox.EndUpdate();
+            };
+
+            listBox.DrawItem += (s, e) =>
+            {
+                if (e.Index < 0) return;
+                var column = listBox.Items[e.Index] as Column;
+                var selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                using (var background = new SolidBrush(selected ? SystemColors.Highlight : highlightPredicate(column) ? SystemColors.Info : listBox.BackColor))
+                    e.Graphics.FillRectangle(background, e.Bounds);
+                using (var foreground = new SolidBrush(selected ? SystemColors.HighlightText : listBox.ForeColor))
+                    e.Graphics.DrawString(column.DaxObjectFullName, e.Font, foreground, e.Bounds);
+                e.DrawFocusRectangle();
+            };
+
+            Action selectCurrent = () =>
+            {
+                if (listBox.SelectedItem is Column column) valueSelected(column);
+            };
+
+            searchBox.TextChanged += (s, e) => applyFilter();
+            searchBox.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Down && listBox.Items.Count > 0)
+                {
+                    listBox.Focus();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Enter)
+                {
+                    selectCurrent();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Escape)
+                {
+                    closeDropDown();
+                    e.Handled = true;
+                }
+            };
+            listBox.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    selectCurrent();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Escape)
+                {
+                    closeDropDown();
+                    e.Handled = true;
+                }
+            };
+            listBox.MouseUp += (s, e) => selectCurrent();
+
+            applyFilter();
+            panel.HandleCreated += (s, e) => panel.BeginInvoke(new Action(() => searchBox.Focus()));
+            return panel;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -224,6 +225,13 @@ namespace TabularEditor.UI
             RemoveSeparators(menu.DropDown);
             
             var dict = act.ArgNames;
+            var searchBox = new ToolStripTextBox();
+            searchBox.BorderStyle = BorderStyle.FixedSingle;
+            searchBox.ToolTipText = "Type to filter";
+            searchBox.Width = 240;
+            menu.DropDownItems.Add(searchBox);
+
+            var dynamicItems = new List<ToolStripItem>();
 
             foreach (string argName in dict.Keys)
             {
@@ -232,10 +240,37 @@ namespace TabularEditor.UI
                 item.Tag = act;
                 item.Name = argName;
                 item.Enabled = act.Enabled(dict[argName]);
+                if (IsRelationshipNameMatch(act, dict[argName])) item.BackColor = SystemColors.Info;
                 item.Click += ContextMenuItem_Click;
+                dynamicItems.Add(item);
             }
+
+            searchBox.TextChanged += (s, args) =>
+            {
+                var filter = searchBox.Text.Trim();
+                foreach (var item in dynamicItems)
+                {
+                    if (item is ToolStripSeparator)
+                        item.Visible = filter.Length == 0;
+                    else
+                        item.Visible = filter.Length == 0 || item.Text.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
+                }
+            };
+            searchBox.Focus();
+            searchBox.Control.Focus();
             
             state.IsLoaded = true;
+        }
+
+        private bool IsRelationshipNameMatch(IModelMultiAction action, object arg)
+        {
+            if (!(action is CreateRelationshipAction) || !(arg is Column column)) return false;
+            var selectedColumn = Selection.Columns.FirstOrDefault();
+            if (selectedColumn == null) return false;
+
+            var selectedName = selectedColumn.Name.Replace(" ", "");
+            var columnName = column.Name.Replace(" ", "");
+            return columnName.EndsWith(selectedName) || selectedName.EndsWith(columnName);
         }
 
         private ToolStripItem ContextMenu_AddFromAction(string name, ToolStripDropDown menu)

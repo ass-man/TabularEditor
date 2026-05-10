@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v08funnel",
+  "position": {
+    "x": 935,
+    "y": 180,
+    "z": 7000,
+    "height": 235,
+    "width": 345,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "funnel",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Purchase"
+                    }
+                  },
+                  "Property": "Package"
+                }
+              },
+              "queryRef": "F_Purchase.Package",
+              "nativeQueryRef": "Package",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Purchase"
+                    }
+                  },
+                  "Property": "Purchase Received Outers"
+                }
+              },
+              "queryRef": "F_Purchase.Purchase Received Outers",
+              "nativeQueryRef": "Purchase Received Outers"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

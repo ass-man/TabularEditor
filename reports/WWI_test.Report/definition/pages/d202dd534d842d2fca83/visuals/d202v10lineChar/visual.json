@@ -1,0 +1,75 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "d202v10lineChar",
+  "position": {
+    "x": 0,
+    "y": 385,
+    "z": 9000,
+    "height": 230,
+    "width": 410,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Date"
+                    }
+                  },
+                  "Property": "Calendar Month Label"
+                }
+              },
+              "queryRef": "D_Date.Calendar Month Label",
+              "nativeQueryRef": "Calendar Month Label",
+              "active": true
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Date"
+                    }
+                  },
+                  "Property": "Calendar Year Label"
+                }
+              },
+              "queryRef": "D_Date.Calendar Year Label",
+              "nativeQueryRef": "Calendar Year Label"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Movement"
+                    }
+                  },
+                  "Property": "Movement Quantity"
+                }
+              },
+              "queryRef": "F_Movement.Movement Quantity",
+              "nativeQueryRef": "Movement Quantity"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

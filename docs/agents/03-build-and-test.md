@@ -157,6 +157,9 @@ This targeted command was executed successfully in this environment:
 ## Runtime Script Plugin Compiler Compatibility
 
 - Script-backed plugins (`*.csx` loaded by `PluginLoader`) compile through CodeDom at runtime and behave like an older C# compiler than the main project language version.
+- Script plugin compilation scope:
+  - all `*.csx` files in the folder of the configured `source` script are compiled together
+  - there is no recursive subfolder compile by default
 - Use compatibility-safe syntax in runtime plugin scripts:
   - avoid string interpolation (`$"..."`)
   - prefer classic string concatenation/formatting

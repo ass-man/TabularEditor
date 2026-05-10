@@ -5,6 +5,8 @@ using System.Drawing.Design;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Forms.Design;
 using TabularEditor.TOMWrapper;
 
 namespace TabularEditor.PropertyGridUI
@@ -27,6 +29,11 @@ namespace TabularEditor.PropertyGridUI
     public interface ICustomEditor
     {
         object Edit(object instance, string property, object value, out bool cancel);
+    }
+
+    public interface ICustomDropDownEditor: ICustomEditor
+    {
+        Control CreateDropDownControl(object instance, string property, object value, Action<object> valueSelected, Action closeDropDown);
     }
 
     public static class CustomEditors
@@ -54,6 +61,13 @@ namespace TabularEditor.PropertyGridUI
         {
             return editors.ContainsKey(property);
         }
+
+        internal static ICustomEditor GetEditor(string property)
+        {
+            ICustomEditor editor;
+            editors.TryGetValue(property, out editor);
+            return editor;
+        }
     }
 
     internal class CustomDialogEditor: UITypeEditor
@@ -62,11 +76,32 @@ namespace TabularEditor.PropertyGridUI
         {
             if (context == null)
                 return UITypeEditorEditStyle.Modal;
-            return CustomEditors.HasEditorFor(context.PropertyDescriptor.Name) ? UITypeEditorEditStyle.Modal : UITypeEditorEditStyle.None;
+
+            var editor = CustomEditors.GetEditor(context.PropertyDescriptor.Name);
+            if (editor is ICustomDropDownEditor) return UITypeEditorEditStyle.DropDown;
+            return editor != null ? UITypeEditorEditStyle.Modal : UITypeEditorEditStyle.None;
         }
 
         public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
         {
+            var editor = CustomEditors.GetEditor(context.PropertyDescriptor.Name);
+            var dropDownEditor = editor as ICustomDropDownEditor;
+            var editorService = provider?.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+            if (dropDownEditor != null && editorService != null)
+            {
+                var selectedValue = value;
+                var selected = false;
+                var control = dropDownEditor.CreateDropDownControl(context.Instance, context.PropertyDescriptor.Name, value, v =>
+                {
+                    selectedValue = v;
+                    selected = true;
+                    editorService.CloseDropDown();
+                }, editorService.CloseDropDown);
+
+                editorService.DropDownControl(control);
+                return selected ? selectedValue : value;
+            }
+
             bool cancel;
             var newValue = CustomEditors.Edit(context.Instance, context.PropertyDescriptor.Name, value, out cancel);
             if (cancel) return value;

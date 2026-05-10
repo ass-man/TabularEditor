@@ -1,0 +1,93 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v06lineStac",
+  "position": {
+    "x": 0,
+    "y": 115,
+    "z": 5000,
+    "height": 260,
+    "width": 530,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "lineStackedColumnComboChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Date"
+                    }
+                  },
+                  "Property": "Calendar Month Label"
+                }
+              },
+              "queryRef": "D_Date.Calendar Month Label",
+              "nativeQueryRef": "Calendar Month Label",
+              "active": true
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Date"
+                    }
+                  },
+                  "Property": "Calendar Year Label"
+                }
+              },
+              "queryRef": "D_Date.Calendar Year Label",
+              "nativeQueryRef": "Calendar Year Label"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Purchase"
+                    }
+                  },
+                  "Property": "Purchase Ordered Outers"
+                }
+              },
+              "queryRef": "F_Purchase.Purchase Ordered Outers",
+              "nativeQueryRef": "Purchase Ordered Outers"
+            }
+          ]
+        },
+        "Y2": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Purchase"
+                    }
+                  },
+                  "Property": "Purchase Received Outers"
+                }
+              },
+              "queryRef": "F_Purchase.Purchase Received Outers",
+              "nativeQueryRef": "Purchase Received Outers"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

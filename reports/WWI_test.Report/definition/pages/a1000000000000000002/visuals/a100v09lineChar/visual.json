@@ -1,0 +1,75 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v09lineChar",
+  "position": {
+    "x": 0,
+    "y": 435,
+    "z": 7000,
+    "height": 185,
+    "width": 410,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Date"
+                    }
+                  },
+                  "Property": "Calendar Month Label"
+                }
+              },
+              "queryRef": "D_Date.Calendar Month Label",
+              "nativeQueryRef": "Calendar Month Label",
+              "active": true
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Date"
+                    }
+                  },
+                  "Property": "Calendar Year Label"
+                }
+              },
+              "queryRef": "D_Date.Calendar Year Label",
+              "nativeQueryRef": "Calendar Year Label"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_Customer"
+                    }
+                  },
+                  "Property": "Sales per Active Customer"
+                }
+              },
+              "queryRef": "D_Customer.Sales per Active Customer",
+              "nativeQueryRef": "Sales per Active Customer"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

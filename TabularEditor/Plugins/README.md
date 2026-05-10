@@ -10,6 +10,7 @@
 - Plugins are added under the top-level `Plugins` menu.
 - Runtime plugin loading is lazy (on menu click).
 - Single-instance plugin windows are enforced per plugin descriptor.
+- Script plugin load compiles all `*.csx` files in the plugin folder containing the configured `source` script.
 
 ## Script plugin compatibility notes
 
@@ -36,3 +37,4 @@
 - `TabularEditorTest/Plugins/PluginLoaderTests.cs` contains:
   - single-plugin compile/load coverage for the JSON/TMSL viewer script
   - manifest-driven compile/load coverage for all script plugins
+  - multi-file script compile coverage (all `*.csx` files in one plugin folder compiled together)

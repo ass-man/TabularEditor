@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using TabularEditor.TOMWrapper.Utils;
 using TabularEditor.Utils;
@@ -17,6 +19,13 @@ namespace TabularEditor.TOMWrapper
             public long LoadedVersion;
             public DateTime DatabaseLastUpdate;
             public bool Conflict;
+        }
+
+        public struct ServerModelSnapshot
+        {
+            public long DatabaseVersion;
+            public DateTime DatabaseLastUpdate;
+            public string Hash;
         }
 
         public ConflictInfo CheckConflicts()
@@ -38,6 +47,45 @@ namespace TabularEditor.TOMWrapper
         {
             var versioninfo = CheckConflicts();
             Version = versioninfo.DatabaseVersion;
+        }
+
+        public ServerModelSnapshot GetServerModelSnapshot()
+        {
+            if (string.IsNullOrEmpty(this.serverName) || database == null)
+                throw new InvalidOperationException("The model is currently not connected to any server.");
+
+            using (var s = new TOM.Server())
+            {
+                s.Connect(this.serverName);
+                var db = s.Databases.Find(database.ID) ?? s.Databases.FindByName(database.Name);
+                if (db == null)
+                    throw new InvalidOperationException("The connected database could not be found on the server.");
+
+                var json = TOM.JsonSerializer.SerializeDatabase(db, new TOM.SerializeOptions
+                {
+                    IgnoreInferredObjects = true,
+                    IgnoreInferredProperties = true,
+                    IgnoreTimestamps = true
+                });
+
+                var result = new ServerModelSnapshot
+                {
+                    DatabaseVersion = db.Version,
+                    DatabaseLastUpdate = db.LastUpdate,
+                    Hash = GetHash(json)
+                };
+
+                s.Disconnect();
+                return result;
+            }
+        }
+
+        private static string GetHash(string value)
+        {
+            using (var sha = SHA256.Create())
+            {
+                return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(value))).Replace("-", "");
+            }
         }
 
         public void KeepAlive()

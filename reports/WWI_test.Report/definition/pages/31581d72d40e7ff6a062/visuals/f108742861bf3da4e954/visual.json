@@ -1,0 +1,73 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "f108742861bf3da4e954",
+  "position": {
+    "x": 273.90946502057614,
+    "y": 536.23045267489715,
+    "z": 5002,
+    "height": 91.654320987654316,
+    "width": 167.50617283950618,
+    "tabOrder": 5002
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Purchase"
+                    }
+                  },
+                  "Property": "Purchase Order Count"
+                }
+              },
+              "queryRef": "F_Purchase.Purchase Order Count",
+              "nativeQueryRef": "Purchase Order Count"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "F_Purchase"
+                  }
+                },
+                "Property": "Purchase Order Count"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "907e82a02894b7acdf4c",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "F_Purchase"
+              }
+            },
+            "Property": "Purchase Order Count"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

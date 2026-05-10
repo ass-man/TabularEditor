@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v08pieChart",
+  "position": {
+    "x": 935,
+    "y": 180,
+    "z": 7000,
+    "height": 235,
+    "width": 345,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "pieChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_PaymentMethod"
+                    }
+                  },
+                  "Property": "Payment Method"
+                }
+              },
+              "queryRef": "D_PaymentMethod.Payment Method",
+              "nativeQueryRef": "Payment Method",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Transaction"
+                    }
+                  },
+                  "Property": "Transaction Amount"
+                }
+              },
+              "queryRef": "F_Transaction.Transaction Amount",
+              "nativeQueryRef": "Transaction Amount"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

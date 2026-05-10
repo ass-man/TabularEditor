@@ -35,8 +35,8 @@ namespace TabularEditor.UI.Actions
             get
             {
                 var col = SelectedColumn;
-                var compactName = col.Name.Replace(" ", "");
                 if (col == null) return new Dictionary<string, object>();
+                var compactName = col.Name.Replace(" ", "");
                 var relatedTables = new HashSet<Table>(col.Table.RelatedTables);
 
                 var candidateCols = col.Model.Tables
@@ -58,20 +58,9 @@ namespace TabularEditor.UI.Actions
 
                 var result = new OrderedDictionary();
 
-                Table lastTable = null;
-                bool lastMatch = false;
-                // Populate the dictionary ordered by table names, columns with partial name match, column name:
-                foreach (var c in candidateCols.OrderBy(c => c.column.Table.Name).ThenBy(c => !c.nameMatch).ThenBy(c => c.column.Name))
-                {
-                    // This adds a seperator between the columns that have a partial name match:
-                    if (lastTable == c.column.Table && lastMatch && !c.nameMatch)
-                        result.Add(c.column.Table.Name.ConcatPath("---"), null);
-
-                    result.Add(c.column.Table.Name.ConcatPath(c.column.Name), c.column);
-
-                    lastTable = c.column.Table;
-                    lastMatch = c.nameMatch;
-                }
+                // Populate a flat, searchable list. Put name matches at the top.
+                foreach (var c in candidateCols.OrderBy(c => !c.nameMatch).ThenBy(c => c.column.Table.Name).ThenBy(c => c.column.Name))
+                    result.Add(c.column.DaxObjectFullName, c.column);
 
                 // Add tables that already have a relationship:
                 if (relatedTables.Count > 0)
@@ -97,20 +86,9 @@ namespace TabularEditor.UI.Actions
                     {
                         result.Add("---", null);
 
-                        lastTable = null;
-                        lastMatch = false;
                         // Populate the dictionary ordered by table names, columns with partial name match, column name:
-                        foreach (var c in candidateCols.OrderBy(c => c.column.Table.Name).ThenBy(c => !c.nameMatch).ThenBy(c => c.column.Name))
-                        {
-                            // This adds a seperator between the columns that have a partial name match:
-                            if (lastTable == c.column.Table && lastMatch && !c.nameMatch)
-                                result.Add(c.column.Table.Name.ConcatPath("---"), null);
-
-                            result.Add(c.column.Table.Name.ConcatPath(c.column.Name), c.column);
-
-                            lastTable = c.column.Table;
-                            lastMatch = c.nameMatch;
-                        }
+                        foreach (var c in candidateCols.OrderBy(c => !c.nameMatch).ThenBy(c => c.column.Table.Name).ThenBy(c => c.column.Name))
+                            result.Add(c.column.DaxObjectFullName, c.column);
                     }
                 }
 

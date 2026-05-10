@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v02cardVisu",
+  "position": {
+    "x": 235,
+    "y": 0,
+    "z": 1000,
+    "height": 95,
+    "width": 220,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Purchase"
+                    }
+                  },
+                  "Property": "Purchase Ordered Quantity"
+                }
+              },
+              "queryRef": "F_Purchase.Purchase Ordered Quantity",
+              "nativeQueryRef": "Purchase Ordered Quantity"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

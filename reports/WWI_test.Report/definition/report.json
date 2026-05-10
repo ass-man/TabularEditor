@@ -9,6 +9,15 @@
         "page": "2.3.1"
       },
       "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "Windows_98_Theme21175731090890326.json",
+      "reportVersionAtImport": {
+        "visual": "2.8.0",
+        "report": "3.2.0",
+        "page": "2.3.1"
+      },
+      "type": "RegisteredResources"
     }
   },
   "objects": {
@@ -35,6 +44,17 @@
           "name": "CY26SU04",
           "path": "BaseThemes/CY26SU04.json",
           "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "Windows_98_Theme21175731090890326.json",
+          "path": "Windows_98_Theme21175731090890326.json",
+          "type": "CustomTheme"
         }
       ]
     }

@@ -1,8 +1,6 @@
 # .codex/config.toml
 
 # Default/root agent: planning, orchestration, review.
-model = "gpt-5.5"
-model_reasoning_effort = "high"
 
 # Keep approvals interactive because this is a legacy Windows/.NET repo
 # with NuGet restore, build outputs, installer project, and possible local state.

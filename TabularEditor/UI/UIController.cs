@@ -154,6 +154,9 @@ namespace TabularEditor.UI
 
         public string LastDeploymentDb;
         public DeploymentOptions LastDeployOptions;
+        private TabularModelHandler.ServerModelSnapshot? _serverModelBaseline;
+        private string _lastServerChangeAlertHash;
+        private bool _serverChangeMonitorDisabled;
 
         public void LoadTabularModelToUI()
         {
@@ -214,24 +217,94 @@ namespace TabularEditor.UI
             UI.FormMain.BPAForm.Model = Handler.Model;
             InvokeBPABackground();
 
-            if (Handler.SourceType == ModelSourceType.Database) KeepAliveTimer.Enabled = true;
+            if (Handler.SourceType == ModelSourceType.Database)
+            {
+                ResetServerChangeMonitor();
+                KeepAliveTimer.Enabled = true;
+            }
         }
 
         private void KeepAliveTimer_Tick(object sender, EventArgs e)
         {
             KeepAliveTimer.Enabled = false;
+            var handler = Handler;
+            if (handler == null || handler.SourceType != ModelSourceType.Database) return;
+
             new Task(() =>
             {
                 try
                 {
-                    Handler.KeepAlive();
-                    UI.FormMain.BeginInvoke(new System.Action(() => { KeepAliveTimer.Enabled = true; }));
+                    handler.KeepAlive();
+                    CheckServerModelChanges(handler);
+                    UI.FormMain.BeginInvoke(new System.Action(() => { if (ReferenceEquals(Handler, handler)) KeepAliveTimer.Enabled = true; }));
                 }
                 catch
                 {
                     UI.FormMain.BeginInvoke(new System.Action(() => { UI.StatusLabel.Text = "Connection lost!"; }));
                 }
             }).Start();
+        }
+
+        private void ResetServerChangeMonitor()
+        {
+            _serverModelBaseline = null;
+            _lastServerChangeAlertHash = null;
+            _serverChangeMonitorDisabled = false;
+            CaptureServerChangeBaseline();
+        }
+
+        private void CaptureServerChangeBaseline()
+        {
+            if (Handler == null || Handler.SourceType != ModelSourceType.Database || _serverChangeMonitorDisabled) return;
+
+            try
+            {
+                _serverModelBaseline = Handler.GetServerModelSnapshot();
+                _lastServerChangeAlertHash = null;
+            }
+            catch (Exception ex)
+            {
+                _serverChangeMonitorDisabled = true;
+                TabularModelHandler.Log("Unable to capture server model change baseline: " + ex.Message);
+            }
+        }
+
+        private void CheckServerModelChanges(TabularModelHandler handler)
+        {
+            if (handler == null || handler.SourceType != ModelSourceType.Database || _serverChangeMonitorDisabled) return;
+            if (!_serverModelBaseline.HasValue)
+            {
+                CaptureServerChangeBaseline();
+                return;
+            }
+
+            try
+            {
+                var snapshot = handler.GetServerModelSnapshot();
+                if (snapshot.Hash == _serverModelBaseline.Value.Hash || snapshot.Hash == _lastServerChangeAlertHash) return;
+
+                _lastServerChangeAlertHash = snapshot.Hash;
+                UI.FormMain.BeginInvoke(new System.Action(() => ShowServerModelChanged(handler, snapshot)));
+            }
+            catch (Exception ex)
+            {
+                TabularModelHandler.Log("Unable to check server model changes: " + ex.Message);
+            }
+        }
+
+        private void ShowServerModelChanged(TabularModelHandler handler, TabularModelHandler.ServerModelSnapshot snapshot)
+        {
+            if (UI.FormMain.IsDisposed || !ReferenceEquals(Handler, handler)) return;
+
+            var result = MessageBox.Show(UI.FormMain,
+                string.Format("The server model has changed since it was loaded, saved, or refreshed in Tabular Editor.\r\n\r\nServer model version: {0} (changed {1})\r\nLoaded baseline version: {2}\r\n\r\nDo you want to refresh the model metadata from the server now? Choose No to keep editing without refreshing.",
+                    snapshot.DatabaseVersion, snapshot.DatabaseLastUpdate, _serverModelBaseline?.DatabaseVersion),
+                "Server model changed", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                Database_Refresh();
+            }
         }
 
         private void UIController_ObjectDeleting(object sender, ObjectDeletingEventArgs e)

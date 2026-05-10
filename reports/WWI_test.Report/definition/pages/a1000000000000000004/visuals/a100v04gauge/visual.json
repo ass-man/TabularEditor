@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v04gauge",
+  "position": {
+    "x": 705,
+    "y": 0,
+    "z": 3000,
+    "height": 160,
+    "width": 260,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "gauge",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Transaction"
+                    }
+                  },
+                  "Property": "Outstanding Balance %"
+                }
+              },
+              "queryRef": "F_Transaction.Outstanding Balance %",
+              "nativeQueryRef": "Outstanding Balance %"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

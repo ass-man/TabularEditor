@@ -58,6 +58,19 @@
 - Visual preview placement:
   - Moved the visual coordinate preview out of the Summary tab into a shared bottom area under the right-side tabs.
   - Clicking a visual node in Used By Chain now updates the coordinate preview without replacing the selected grid object's summary.
+  - Coordinate preview now draws the whole report page frame and all visuals on the selected visual's page, highlighting the selected visual instead of scaling one box by itself.
+  - Visual summaries now aggregate incoming Measure Killer visual dependencies by `used_as` so the user can see Rows, Columns, Values, axes, categories, and other visual field wells.
+- Duplicate visual rule:
+  - Added a computed `Duplicate visual` status, status filter option, count strip entry, row coloring, and `[DUP]` tree prefix.
+  - Duplicate detection groups visuals by visual type plus visual input roles/fields, ignoring page, coordinates, title, and visual id.
 - Selected object filter:
   - Changed `Selected object only` from a direct text match to lineage key resolution plus recursive traversal of `UsedBy` edges.
   - Filtering from the main Tabular Editor selection now shows the selected object and every object/report consumer that references it.
+- Grid performance:
+  - Debounced search filtering to avoid rebuilding the grid on every keystroke.
+  - Batched grid row creation with `Rows.AddRange`, suppressed selection/detail refresh during rebuilds, and temporarily disabled column autosizing while loading rows.
+  - Cached the selected-object affected lineage key set until the main Tabular Editor selection changes.
+- Latest export loading:
+  - Replaced the hardcoded `WWI_test_20260509_200325.json` path with discovery of the newest `WWI_test_*.json` in the Measure Killer output folder.
+  - Refresh now re-runs discovery before loading, so newly generated exports are picked up automatically.
+  - Broadened discovery to scan all JSON exports in `C:\Users\gamer\AppData\Local\Programs\Measure Killer`, preferring files whose name starts with the currently open model name and falling back to the newest JSON in that folder.

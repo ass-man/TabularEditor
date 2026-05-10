@@ -1,0 +1,71 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "d202v09hundredP",
+  "position": {
+    "x": 1025,
+    "y": 195,
+    "z": 8000,
+    "height": 235,
+    "width": 255,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "hundredPercentStackedBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_StockItem"
+                    }
+                  },
+                  "Property": "Is Chiller Stock"
+                }
+              },
+              "queryRef": "D_StockItem.Is Chiller Stock",
+              "nativeQueryRef": "Is Chiller Stock",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_StockHolding"
+                    }
+                  },
+                  "Property": "Stock Quantity On Hand"
+                }
+              },
+              "queryRef": "F_StockHolding.Stock Quantity On Hand",
+              "nativeQueryRef": "Stock Quantity On Hand"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_StockHolding"
+                    }
+                  },
+                  "Property": "Inventory Value"
+                }
+              },
+              "queryRef": "F_StockHolding.Inventory Value",
+              "nativeQueryRef": "Inventory Value"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

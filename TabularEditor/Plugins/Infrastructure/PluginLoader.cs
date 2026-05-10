@@ -1,10 +1,9 @@
 using Microsoft.CSharp;
 using System;
 using System.CodeDom.Compiler;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Dynamic;
 using System.Reflection;
 using TabularEditor.TOMWrapper;
 
@@ -55,7 +54,9 @@ namespace TabularEditor.Plugins.Infrastructure
             if (!File.Exists(sourcePath))
                 throw new FileNotFoundException($"Plugin script not found: {sourcePath}", sourcePath);
 
-            var scriptCode = File.ReadAllText(sourcePath);
+            var scriptDirectory = Path.GetDirectoryName(sourcePath);
+            if (string.IsNullOrWhiteSpace(scriptDirectory) || !Directory.Exists(scriptDirectory))
+                throw new DirectoryNotFoundException($"Plugin script directory not found: {scriptDirectory}");
 
             var compilerParameters = new CompilerParameters
             {
@@ -84,22 +85,37 @@ namespace TabularEditor.Plugins.Infrastructure
                 Path.GetFullPath(Path.Combine(
                     baseDir,
                     @"..\..\..\TOMWrapper\bin\" + configuration + @"\TOMWrapper.dll")));
-            var source = string.Join(Environment.NewLine, new[]
+
+            var prelude = string.Join(Environment.NewLine, new[]
             {
                 "using System;",
+                "using System.Collections;",
+                "using System.Collections.Generic;",
+                "using System.IO;",
                 "using System.Linq;",
+                "using System.Text;",
                 "using System.Drawing;",
                 "using System.Windows.Forms;",
                 "using TabularEditor;",
                 "using TabularEditor.UI;",
-                "using TabularEditor.Plugins.Infrastructure;",
-                scriptCode
+                "using TabularEditor.Plugins.Infrastructure;"
             });
+
+            var additionalUsings = new List<string>();
+            var sourceFiles = GetScriptSourcesForFolder(scriptDirectory, sourcePath, additionalUsings);
+            var allUsings = prelude
+                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Concat(additionalUsings)
+                .Distinct(StringComparer.InvariantCultureIgnoreCase);
+
+            var combinedSource = string.Join(Environment.NewLine, allUsings) +
+                                 Environment.NewLine + Environment.NewLine +
+                                 string.Join(Environment.NewLine + Environment.NewLine, sourceFiles);
 
             CompilerResults results;
             using (var provider = new CSharpCodeProvider())
             {
-                results = provider.CompileAssemblyFromSource(compilerParameters, source);
+                results = provider.CompileAssemblyFromSource(compilerParameters, combinedSource);
             }
 
             if (results.Errors.HasErrors)
@@ -113,12 +129,103 @@ namespace TabularEditor.Plugins.Infrastructure
             return ResolvePluginType(descriptor, results.CompiledAssembly);
         }
 
+        private static IEnumerable<string> GetScriptSourcesForFolder(string scriptDirectory, string primaryScriptPath, List<string> additionalUsings)
+        {
+            var allScripts = Directory
+                .EnumerateFiles(scriptDirectory, "*.csx", SearchOption.TopDirectoryOnly)
+                .OrderBy(Path.GetFileName, StringComparer.InvariantCultureIgnoreCase)
+                .ToList();
+
+            if (!allScripts.Any(p => p.Equals(primaryScriptPath, StringComparison.InvariantCultureIgnoreCase)))
+                allScripts.Insert(0, primaryScriptPath);
+
+            var orderedScripts = allScripts
+                .OrderBy(p => p.Equals(primaryScriptPath, StringComparison.InvariantCultureIgnoreCase) ? 0 : 1)
+                .ThenBy(Path.GetFileName, StringComparer.InvariantCultureIgnoreCase)
+                .ToList();
+
+            foreach (var scriptPath in orderedScripts)
+            {
+                var scriptCode = File.ReadAllText(scriptPath);
+                yield return NormalizeScriptCode(scriptCode, additionalUsings);
+            }
+        }
+
+        private static string NormalizeScriptCode(string scriptCode, List<string> additionalUsings)
+        {
+            if (string.IsNullOrWhiteSpace(scriptCode)) return scriptCode;
+
+            var lines = scriptCode.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            var filtered = lines.Where(line =>
+            {
+                var trimmed = line.TrimStart();
+                if (trimmed.StartsWith("#load ", StringComparison.InvariantCultureIgnoreCase))
+                    return false;
+
+                if (IsUsingDirective(trimmed))
+                {
+                    additionalUsings.Add(trimmed);
+                    return false;
+                }
+
+                return true;
+            });
+
+            return string.Join(Environment.NewLine, filtered);
+        }
+
+        private static bool IsUsingDirective(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line)) return false;
+            if (!line.StartsWith("using ", StringComparison.InvariantCulture)) return false;
+            if (!line.EndsWith(";", StringComparison.InvariantCulture)) return false;
+            if (line.StartsWith("using static ", StringComparison.InvariantCulture)) return true;
+            if (line.Contains("=")) return true;
+            return true;
+        }
+
         private static void AddReferenceIfResolvable(CompilerParameters parameters, string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return;
             if (!File.Exists(path)) return;
-            if (parameters.ReferencedAssemblies.Contains(path)) return;
+            if (HasEquivalentReference(parameters, path)) return;
             parameters.ReferencedAssemblies.Add(path);
+        }
+
+        private static bool HasEquivalentReference(CompilerParameters parameters, string candidatePath)
+        {
+            var candidateSimpleName = GetAssemblySimpleName(candidatePath);
+            foreach (string existingReference in parameters.ReferencedAssemblies)
+            {
+                if (existingReference.Equals(candidatePath, StringComparison.InvariantCultureIgnoreCase))
+                    return true;
+
+                var existingSimpleName = GetAssemblySimpleName(existingReference);
+                if (!string.IsNullOrWhiteSpace(existingSimpleName) &&
+                    existingSimpleName.Equals(candidateSimpleName, StringComparison.InvariantCultureIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string GetAssemblySimpleName(string assemblyPathOrName)
+        {
+            if (string.IsNullOrWhiteSpace(assemblyPathOrName)) return null;
+
+            if (File.Exists(assemblyPathOrName))
+            {
+                try
+                {
+                    return AssemblyName.GetAssemblyName(assemblyPathOrName).Name;
+                }
+                catch
+                {
+                    return Path.GetFileNameWithoutExtension(assemblyPathOrName);
+                }
+            }
+
+            return Path.GetFileNameWithoutExtension(assemblyPathOrName);
         }
 
         private static Type ResolvePluginType(PluginDescriptor descriptor, Assembly assembly)

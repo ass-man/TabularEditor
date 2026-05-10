@@ -65,6 +65,7 @@
     - Added explicit script compile references for `System*` UI assemblies, executing assembly, `TabularModelHandler` assembly, and explicit fallback paths for `TOMWrapper.dll` and `TabularEditor.exe`.
     - Removed broad "all loaded assemblies" reference loop after it introduced duplicate-identity compile errors (`CS1703`).
     - Removed unconditional script prelude `using TabularEditor.TOMWrapper*` statements to avoid forcing TOMWrapper namespace resolution in every script.
+    - Script plugin compilation now compiles all `*.csx` files in the configured plugin folder (same directory as descriptor `source`) in one compilation.
   - `TabularEditor/Plugins/ModelJsonViewer/ModelJsonViewerPlugin.csx`:
     - Added `Copy as Text` command in the toolstrip.
     - Reworked auto-refresh to timer-based polling and removed direct TOMWrapper event-arg type usage from script code.
@@ -77,6 +78,7 @@
   - `TabularEditorTest/Plugins/PluginLoaderTests.cs`:
     - Added automated regression test that loads and compiles the JSON/TMSL script plugin via `PluginLoader`.
     - Added manifest-driven automated regression test that loads and compiles all script plugins declared in plugin manifests.
+    - Added multi-file script regression test to verify all `*.csx` files in one plugin folder are compiled together.
   - `TabularEditorTest/TabularEditorTest.csproj`:
     - Included the new plugin-loader test file in test compilation.
 

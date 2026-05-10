@@ -1,0 +1,75 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a100v07waterfal",
+  "position": {
+    "x": 550,
+    "y": 180,
+    "z": 6000,
+    "height": 235,
+    "width": 365,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "waterfallChart",
+    "query": {
+      "queryState": {
+        "Breakdown": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Transaction"
+                    }
+                  },
+                  "Property": "Is Finalized"
+                }
+              },
+              "queryRef": "F_Transaction.Is Finalized",
+              "nativeQueryRef": "Is Finalized"
+            }
+          ]
+        },
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_TransactionType"
+                    }
+                  },
+                  "Property": "Transaction Type"
+                }
+              },
+              "queryRef": "D_TransactionType.Transaction Type",
+              "nativeQueryRef": "Transaction Type",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_Transaction"
+                    }
+                  },
+                  "Property": "Outstanding Balance Amount"
+                }
+              },
+              "queryRef": "F_Transaction.Outstanding Balance Amount",
+              "nativeQueryRef": "Outstanding Balance Amount"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

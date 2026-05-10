@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,6 +16,7 @@ namespace TabularEditor.UI
     public partial class UIController
     {
         private const string NEW_DEPLOYMENT_TARGET = "<New deployment target...>";
+        private string DatabaseDiskCopyPath;
 
         public void Database_Deploy()
         {
@@ -72,6 +74,13 @@ namespace TabularEditor.UI
                 }
 
                 UI.StatusLabel.Text = string.Format(error ? "{0}: Deployment failed!" : cancelled ? "{0}: Deployment cancelled!" : "{0}: Deployment succeeded!", f.DeployTargetServer.Name);
+                if (!error && !cancelled
+                    && Handler.SourceType == ModelSourceType.Database
+                    && string.Equals(f.DeployTargetServer.Name, Handler.Database.Server.Name, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(f.DeployTargetDatabaseName, Handler.Database.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    CaptureServerChangeBaseline();
+                }
             }
         }
 
@@ -167,6 +176,7 @@ namespace TabularEditor.UI
 
                     File_Current = null;
                     File_Directory = null;
+                    DatabaseDiskCopyPath = null;
                     File_SaveMode = ModelSourceType.Database;
                     if(Handler.IsPbiDesktop && ConnectForm.LocalInstance == null)
                     {
@@ -202,8 +212,9 @@ namespace TabularEditor.UI
                         MessageBoxButtons.YesNo, MessageBoxIcon.Information);
                     if (result != DialogResult.Yes) return;
                 }
-                Handler.RefreshTom();
-                UpdateUIText();
+                    Handler.RefreshTom();
+                    CaptureServerChangeBaseline();
+                    UpdateUIText();
             }));
         }
 
@@ -229,6 +240,7 @@ namespace TabularEditor.UI
                 try
                 {
                     Handler.RefreshTom();
+                    CaptureServerChangeBaseline();
                     UpdateUIText();
                     UI.TreeView.Refresh();
                 }
@@ -261,6 +273,8 @@ namespace TabularEditor.UI
                 return;
             }
 
+            if (!EnsureDatabaseDiskCopyPath()) return;
+
             using (new Hourglass())
             {
                 UI.StatusLabel.Text = "Saving changes to DB...";
@@ -284,6 +298,8 @@ namespace TabularEditor.UI
                     CL1571TranslationsCheck();
                     Handler.Model.UpdateDeploymentMetadata(DeploymentModeMetadata.SaveUI);
                     Handler.SaveDB();
+                    SaveDatabaseDiskCopy();
+                    CaptureServerChangeBaseline();
                 }
                 catch (Exception e)
                 {
@@ -292,6 +308,46 @@ namespace TabularEditor.UI
 
                 UI.TreeView.Refresh();
 
+            }
+        }
+
+        private bool EnsureDatabaseDiskCopyPath()
+        {
+            if (!string.IsNullOrWhiteSpace(DatabaseDiskCopyPath)) return true;
+
+            using (var dialog = new SaveFileDialog())
+            {
+                dialog.Title = "Save local copy of database model";
+                dialog.Filter = "Tabular Model|*.bim";
+                dialog.DefaultExt = "bim";
+                dialog.AddExtension = true;
+                dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                dialog.FileName = GetSafeFileName((Handler?.Database?.Name ?? "Model") + ".bim");
+
+                if (dialog.ShowDialog(UI.FormMain) != DialogResult.OK) return false;
+                DatabaseDiskCopyPath = dialog.FileName;
+            }
+
+            return true;
+        }
+
+        private string GetSafeFileName(string fileName)
+        {
+            foreach (var c in Path.GetInvalidFileNameChars())
+                fileName = fileName.Replace(c, '_');
+            return fileName;
+        }
+
+        private void SaveDatabaseDiskCopy()
+        {
+            try
+            {
+                var serializationOptions = Preferences.Current.GetSerializeOptions(LocalInstance?.Type == LocalInstanceType.PowerBI ? LocalInstance.Name : null);
+                Handler.Save(DatabaseDiskCopyPath, SaveFormat.ModelSchemaOnly, serializationOptions, false, false, true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(UI.FormMain, ex.Message, "Could not save local model copy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "d202v12pivotTab",
+  "position": {
+    "x": 850,
+    "y": 450,
+    "z": 11000,
+    "height": 170,
+    "width": 430,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_StockItem"
+                    }
+                  },
+                  "Property": "Selling Package"
+                }
+              },
+              "queryRef": "D_StockItem.Selling Package",
+              "nativeQueryRef": "Selling Package",
+              "active": true
+            }
+          ]
+        },
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_StockItem"
+                    }
+                  },
+                  "Property": "Brand"
+                }
+              },
+              "queryRef": "D_StockItem.Brand",
+              "nativeQueryRef": "Brand",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "D_StockItem"
+                    }
+                  },
+                  "Property": "Stock Item"
+                }
+              },
+              "queryRef": "D_StockItem.Stock Item",
+              "nativeQueryRef": "Stock Item",
+              "active": false
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_StockHolding"
+                    }
+                  },
+                  "Property": "Inventory Value"
+                }
+              },
+              "queryRef": "F_StockHolding.Inventory Value",
+              "nativeQueryRef": "Inventory Value"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_StockHolding"
+                    }
+                  },
+                  "Property": "Stock Quantity On Hand"
+                }
+              },
+              "queryRef": "F_StockHolding.Stock Quantity On Hand",
+              "nativeQueryRef": "Stock Quantity On Hand"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "F_StockHolding"
+                    }
+                  },
+                  "Property": "Reorder Risk Items"
+                }
+              },
+              "queryRef": "F_StockHolding.Reorder Risk Items",
+              "nativeQueryRef": "Reorder Risk Items"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

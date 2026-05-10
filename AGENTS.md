@@ -32,6 +32,7 @@ This repository is Tabular Editor 2.x, the open-source .NET Framework WinForms C
 - Keep behavior backwards-compatible unless the feature plan says otherwise.
 - Update feature implementation logs after important discoveries.
 - Prefer adding or updating targeted tests near existing related tests.
+- Never build the project or run tests without piping the output to a logfile. Only analyze the logs if the build fails, the output is warning heavy so only read errors.
 
 ## Feature Workflow
 

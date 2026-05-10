@@ -17,7 +17,8 @@ public class MeasureKillerViewerPlugin : IRuntimeWindowPlugin
 
 internal class MeasureKillerViewerForm : Form
 {
-    private const string JsonPath = @"C:\Users\gamer\AppData\Local\Programs\Measure Killer\WWI_test_20260509_200325.json";
+    private const string JsonFolder = @"C:\Users\gamer\AppData\Local\Programs\Measure Killer";
+    private const string JsonSearchPattern = "*.json";
 
     private readonly PluginHostContext context;
     private readonly TextBox txtFilter;
@@ -35,8 +36,18 @@ internal class MeasureKillerViewerForm : Form
     private readonly CheckBox chkFullDetails;
     private readonly Panel visualPreview;
     private readonly RowStyle visualPreviewRow;
+    private readonly Button btnPreviewPrevious;
+    private readonly Button btnPreviewNext;
+    private readonly Label lblPreviewPage;
+    private readonly Panel visualPreviewContainer;
     private readonly List<VisualBox> visualBoxes = new List<VisualBox>();
+    private readonly List<VisualBox> allPreviewBoxes = new List<VisualBox>();
+    private readonly List<VisualBox> allReportVisualBoxes = new List<VisualBox>();
+    private readonly List<string> visualPreviewPages = new List<string>();
+    private string visualPreviewTitle = "Visual coordinates";
+    private int visualPreviewPageIndex;
     private readonly Timer selectionTimer;
+    private readonly Timer filterTimer;
     private readonly List<CheckBox> impactFilterChecks = new List<CheckBox>();
     private readonly List<CheckBox> objectTypeFilterChecks = new List<CheckBox>();
     private readonly List<MkNode> allRoots = new List<MkNode>();
@@ -44,9 +55,13 @@ internal class MeasureKillerViewerForm : Form
     private readonly Dictionary<string, LineageObject> lineageByKey = new Dictionary<string, LineageObject>(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<EffectiveUsage, Label> statusCountLabels = new Dictionary<EffectiveUsage, Label>();
     private readonly HashSet<string> rememberedExpandedPaths = new HashSet<string>();
+    private string currentJsonPath = "";
     private string lastSelectionKey = "";
+    private string cachedSelectedAffectKey = "";
+    private HashSet<string> cachedSelectedAffectedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private bool expandAfterSelectionChange;
     private bool suppressExpansionTracking;
+    private bool suppressGridSelectionChanged;
 
     public MeasureKillerViewerForm(PluginHostContext context)
     {
@@ -102,12 +117,12 @@ internal class MeasureKillerViewerForm : Form
 
         filterLayout.Controls.Add(new Label { Text = "Search:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 5, 6, 0) }, 0, 0);
         txtFilter = new TextBox { Dock = DockStyle.Fill };
-        txtFilter.TextChanged += delegate { ApplyFilters(); };
+        txtFilter.TextChanged += delegate { ScheduleFilter(); };
         filterLayout.Controls.Add(txtFilter, 1, 0);
 
         filterLayout.Controls.Add(new Label { Text = "Status:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 5, 6, 0) }, 2, 0);
         cboStatus = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
-        cboStatus.Items.AddRange(new object[] { "All", "Keep", "Cascade candidate", "Relationship only", "Relationship island", "Unused", "Review" });
+        cboStatus.Items.AddRange(new object[] { "All", "Keep", "Cascade candidate", "Relationship only", "Relationship island", "Duplicate visual", "Unused", "Review" });
         cboStatus.SelectedIndex = 0;
         cboStatus.SelectedIndexChanged += delegate { ApplyFilters(); };
         filterLayout.Controls.Add(cboStatus, 3, 0);
@@ -125,7 +140,7 @@ internal class MeasureKillerViewerForm : Form
         filterLayout.Controls.Add(cboTable, 7, 0);
 
         chkSelectedObject = new CheckBox { AutoSize = true, Checked = false, Text = "Selected object only", Margin = new Padding(12, 4, 6, 0) };
-        chkSelectedObject.CheckedChanged += delegate { ApplyFilters(); UpdateSelectionLabel(); };
+        chkSelectedObject.CheckedChanged += delegate { InvalidateSelectedAffectedCache(); ApplyFilters(); UpdateSelectionLabel(); };
         filterLayout.Controls.Add(chkSelectedObject, 8, 0);
         chkFullDetails.Margin = new Padding(12, 4, 6, 0);
         filterLayout.Controls.Add(chkFullDetails, 9, 0);
@@ -149,6 +164,7 @@ internal class MeasureKillerViewerForm : Form
         AddStatusCount(summaryStrip, EffectiveUsage.CascadeCandidate, "Cascade");
         AddStatusCount(summaryStrip, EffectiveUsage.RelationshipOnly, "Relationship only");
         AddStatusCount(summaryStrip, EffectiveUsage.RelationshipIsland, "Relationship island");
+        AddStatusCount(summaryStrip, EffectiveUsage.DuplicateVisual, "Duplicate visuals");
         AddStatusCount(summaryStrip, EffectiveUsage.Unused, "Unused");
         AddStatusCount(summaryStrip, EffectiveUsage.Review, "Review");
         rootLayout.Controls.Add(summaryStrip, 0, 2);
@@ -202,6 +218,34 @@ internal class MeasureKillerViewerForm : Form
         };
         visualPreview.Paint += PaintVisualPreview;
 
+        btnPreviewPrevious = new Button { Text = "<", Dock = DockStyle.Fill, Width = 28 };
+        btnPreviewNext = new Button { Text = ">", Dock = DockStyle.Fill, Width = 28 };
+        lblPreviewPage = new Label { Text = "", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+        btnPreviewPrevious.Click += delegate { ChangePreviewPage(-1); };
+        btnPreviewNext.Click += delegate { ChangePreviewPage(1); };
+
+        var previewNav = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 26,
+            ColumnCount = 3,
+            RowCount = 1
+        };
+        previewNav.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
+        previewNav.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
+        previewNav.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        previewNav.Controls.Add(btnPreviewPrevious, 0, 0);
+        previewNav.Controls.Add(btnPreviewNext, 1, 0);
+        previewNav.Controls.Add(lblPreviewPage, 2, 0);
+
+        visualPreviewContainer = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Visible = false
+        };
+        visualPreviewContainer.Controls.Add(visualPreview);
+        visualPreviewContainer.Controls.Add(previewNav);
+
         var detailsLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -234,7 +278,7 @@ internal class MeasureKillerViewerForm : Form
         visualPreviewRow = new RowStyle(SizeType.Absolute, 0);
         rightLayout.RowStyles.Add(visualPreviewRow);
         rightLayout.Controls.Add(tabs, 0, 0);
-        rightLayout.Controls.Add(visualPreview, 0, 1);
+        rightLayout.Controls.Add(visualPreviewContainer, 0, 1);
 
         gridObjects = new DataGridView
         {
@@ -262,7 +306,7 @@ internal class MeasureKillerViewerForm : Form
         gridObjects.Columns["DirectUsage"].FillWeight = 115;
         gridObjects.Columns["UsedBy"].FillWeight = 60;
         gridObjects.Columns["Reason"].FillWeight = 190;
-        gridObjects.SelectionChanged += delegate { UpdateSelectedObjectDetails(); };
+        gridObjects.SelectionChanged += delegate { if (!suppressGridSelectionChanged) UpdateSelectedObjectDetails(); };
         gridObjects.CellMouseDown += GridObjects_CellMouseDown;
         gridObjects.ContextMenuStrip = BuildGridContextMenu();
 
@@ -279,7 +323,9 @@ internal class MeasureKillerViewerForm : Form
         selectionTimer = new Timer { Interval = 500 };
         selectionTimer.Tick += delegate { RefreshSelectionFilterIfNeeded(); };
         selectionTimer.Start();
-        FormClosed += delegate { selectionTimer.Stop(); selectionTimer.Dispose(); };
+        filterTimer = new Timer { Interval = 220 };
+        filterTimer.Tick += delegate { filterTimer.Stop(); ApplyFilters(); };
+        FormClosed += delegate { selectionTimer.Stop(); selectionTimer.Dispose(); filterTimer.Stop(); filterTimer.Dispose(); };
         Load += delegate { LoadJson(); UpdateSelectionLabel(); };
     }
 
@@ -343,20 +389,23 @@ internal class MeasureKillerViewerForm : Form
         tree.Nodes.Clear();
         lineageObjects.Clear();
         lineageByKey.Clear();
+        allReportVisualBoxes.Clear();
+        InvalidateSelectedAffectedCache();
+        currentJsonPath = FindLatestJsonPath();
 
-        if (!File.Exists(JsonPath))
+        if (!File.Exists(currentJsonPath))
         {
-            lblStatus.Text = "JSON file not found.";
+            lblStatus.Text = "No Measure Killer JSON export found in " + JsonFolder + ".";
             return;
         }
 
         try
         {
-            var root = Json.ReadObject(File.ReadAllText(JsonPath));
+            var root = Json.ReadObject(File.ReadAllText(currentJsonPath));
             BuildLineageModel(root);
             PopulateTableFilter();
             ApplyFilters();
-            lblStatus.Text = "Loaded JSON export. Objects: " + lineageObjects.Count + ", relationships: " + Json.Array(root, "relationships").Count + ".";
+            lblStatus.Text = "Loaded " + Path.GetFileName(currentJsonPath) + ". Objects: " + lineageObjects.Count + ", relationships: " + Json.Array(root, "relationships").Count + ".";
             return;
 
             var modelName = Json.Str(root, "model_name");
@@ -459,6 +508,74 @@ internal class MeasureKillerViewerForm : Form
         }
     }
 
+    private string FindLatestJsonPath()
+    {
+        if (!Directory.Exists(JsonFolder)) return "";
+        var modelName = GetCurrentModelNameForExport();
+        var modelMatch = FindLatestJsonPath(modelName);
+        if (!string.IsNullOrWhiteSpace(modelMatch)) return modelMatch;
+        return FindLatestJsonPath("");
+    }
+
+    private static string FindLatestJsonPath(string modelName)
+    {
+        string best = "";
+        string bestStamp = "";
+        DateTime bestWrite = DateTime.MinValue;
+        var requireModelName = !string.IsNullOrWhiteSpace(modelName);
+
+        foreach (var file in Directory.GetFiles(JsonFolder, JsonSearchPattern))
+        {
+            if (requireModelName && !FileNameMatchesModel(file, modelName)) continue;
+            var stamp = TimestampFromFileName(file);
+            var write = File.GetLastWriteTime(file);
+            if (string.IsNullOrEmpty(best) ||
+                string.Compare(stamp, bestStamp, StringComparison.OrdinalIgnoreCase) > 0 ||
+                (string.Equals(stamp, bestStamp, StringComparison.OrdinalIgnoreCase) && write > bestWrite))
+            {
+                best = file;
+                bestStamp = stamp;
+                bestWrite = write;
+            }
+        }
+
+        return best;
+    }
+
+    private string GetCurrentModelNameForExport()
+    {
+        try
+        {
+            var handler = GetPropertyObject(context, "Handler");
+            var model = GetPropertyObject(handler, "Model");
+            var modelName = GetProperty(model, "Name");
+            if (!string.IsNullOrWhiteSpace(modelName)) return modelName;
+        }
+        catch
+        {
+        }
+        return "";
+    }
+
+    private static bool FileNameMatchesModel(string file, string modelName)
+    {
+        var name = Path.GetFileNameWithoutExtension(file);
+        return !string.IsNullOrWhiteSpace(name) &&
+               name.StartsWith(modelName + "_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string TimestampFromFileName(string file)
+    {
+        var name = Path.GetFileNameWithoutExtension(file);
+        if (string.IsNullOrWhiteSpace(name)) return "";
+        var index = name.LastIndexOf('_');
+        if (index <= 0 || index >= name.Length - 1) return name;
+        var datePart = name.Substring(0, index);
+        var secondIndex = datePart.LastIndexOf('_');
+        if (secondIndex < 0) return name.Substring(index + 1);
+        return datePart.Substring(secondIndex + 1) + "_" + name.Substring(index + 1);
+    }
+
     private void BuildLineageModel(Dictionary<string, object> root)
     {
         var unusedMeasures = BuildUnusedMeasureKeys(root);
@@ -505,6 +622,8 @@ internal class MeasureKillerViewerForm : Form
 
         foreach (var table in lineageObjects)
             if (table.ObjectType == "Table") ClassifyTableLineage(table);
+
+        ClassifyDuplicateVisuals();
     }
 
     private LineageObject AddLineageObject(string objectType, string tableName, string name, Dictionary<string, object> raw)
@@ -578,9 +697,24 @@ internal class MeasureKillerViewerForm : Form
         {
             var visualName = VisualName(dep, kind);
             var visual = GetOrCreateConsumer("Visual", Json.Str(dep, "page"), visualName, dep, EffectiveUsage.Keep);
+            var role = FirstNonEmpty(Json.Str(dep, "used_as"), UsageLabel(kind));
             visual.DirectUsage = UsageLabel(kind);
-            AddEdge(obj, visual, kind, UsageLabel(kind));
+            AddEdge(obj, visual, kind, role);
+            AddReportVisualBox(dep);
         }
+    }
+
+    private void AddReportVisualBox(Dictionary<string, object> dep)
+    {
+        var box = TryCreateVisualBox(dep, false);
+        if (box == null) return;
+        var key = box.Page + "|" + box.VisualId + "|" + box.X + "|" + box.Y + "|" + box.Width + "|" + box.Height;
+        foreach (var existing in allReportVisualBoxes)
+        {
+            var existingKey = existing.Page + "|" + existing.VisualId + "|" + existing.X + "|" + existing.Y + "|" + existing.Width + "|" + existing.Height;
+            if (existingKey.Equals(key, StringComparison.OrdinalIgnoreCase)) return;
+        }
+        allReportVisualBoxes.Add(box);
     }
 
     private void AddMetadataEdges(LineageObject obj, Dictionary<string, object> raw, string key, LineageEdgeKind kind, string label)
@@ -663,6 +797,59 @@ internal class MeasureKillerViewerForm : Form
         }
     }
 
+    private void ClassifyDuplicateVisuals()
+    {
+        var groups = new Dictionary<string, List<LineageObject>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var visual in lineageObjects)
+        {
+            if (!visual.ObjectType.Equals("Visual", StringComparison.OrdinalIgnoreCase)) continue;
+            var signature = VisualDuplicateSignature(visual);
+            if (string.IsNullOrWhiteSpace(signature)) continue;
+
+            List<LineageObject> matches;
+            if (!groups.TryGetValue(signature, out matches))
+            {
+                matches = new List<LineageObject>();
+                groups[signature] = matches;
+            }
+            matches.Add(visual);
+        }
+
+        foreach (var group in groups.Values)
+        {
+            if (group.Count < 2) continue;
+            var locations = string.Join(", ", group.Select(v => string.IsNullOrWhiteSpace(v.TableName) ? v.Name : v.TableName + " / " + v.Name).ToArray());
+            foreach (var visual in group)
+            {
+                visual.EffectiveUsage = EffectiveUsage.DuplicateVisual;
+                visual.Reason = "This visual has the same visual type and field wells as another visual: " + locations + ".";
+                visual.Recommendation = "Review whether these visuals are intentionally repeated. If not, remove or consolidate the duplicate visual.";
+            }
+        }
+    }
+
+    private string VisualDuplicateSignature(LineageObject visual)
+    {
+        var raw = visual.SourceObject as Dictionary<string, object>;
+        var visualType = raw == null ? "" : Json.Str(raw, "visual_type");
+        if (string.IsNullOrWhiteSpace(visualType)) visualType = visual.Name;
+
+        var inputs = new List<string>();
+        foreach (var producer in lineageObjects)
+        {
+            foreach (var edge in producer.UsedBy)
+            {
+                if (!edge.ToKey.Equals(visual.Key, StringComparison.OrdinalIgnoreCase)) continue;
+                var role = string.IsNullOrWhiteSpace(edge.Label) ? UsageLabel(edge.Kind) : edge.Label;
+                inputs.Add(role + ":" + producer.ObjectType + ":" + producer.TableName + ":" + producer.Name);
+            }
+        }
+
+        if (inputs.Count == 0) return "";
+        inputs.Sort(StringComparer.OrdinalIgnoreCase);
+        return visualType + "|" + string.Join("|", inputs.ToArray());
+    }
+
     private bool ReachesRealConsumer(LineageObject obj, HashSet<string> visited)
     {
         if (obj == null || !visited.Add(obj.Key)) return false;
@@ -721,22 +908,27 @@ internal class MeasureKillerViewerForm : Form
     private void ApplyFilters()
     {
         if (gridObjects == null) return;
+        var previousKey = SelectedLineageObject() == null ? "" : SelectedLineageObject().Key;
+        var previousAutoSize = gridObjects.AutoSizeColumnsMode;
+        gridObjects.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
         var searchTerms = Terms(txtFilter.Text);
         var status = Convert.ToString(cboStatus.SelectedItem ?? "All");
         var type = Convert.ToString(cboObjectType.SelectedItem ?? "All");
         var table = Convert.ToString(cboTable.SelectedItem ?? "All tables");
-        var selectedKeys = chkSelectedObject.Checked ? GetSelectedAffectedKeys() : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var selectedKeys = chkSelectedObject.Checked ? GetCachedSelectedAffectedKeys() : null;
 
-        gridObjects.Rows.Clear();
+        var rows = new List<DataGridViewRow>();
         foreach (var obj in lineageObjects)
         {
             if (!StatusMatches(obj, status)) continue;
             if (type != "All" && !obj.ObjectType.Equals(type, StringComparison.OrdinalIgnoreCase)) continue;
             if (table != "All tables" && !obj.TableName.Equals(table, StringComparison.OrdinalIgnoreCase) && !(obj.ObjectType == "Table" && obj.Name.Equals(table, StringComparison.OrdinalIgnoreCase))) continue;
             if (searchTerms.Length > 0 && !ContainsAllTerms(obj.SearchText, searchTerms)) continue;
-            if (selectedKeys.Count > 0 && !selectedKeys.Contains(obj.Key)) continue;
+            if (selectedKeys != null && selectedKeys.Count > 0 && !selectedKeys.Contains(obj.Key)) continue;
 
-            var index = gridObjects.Rows.Add(
+            var row = new DataGridViewRow();
+            row.CreateCells(
+                gridObjects,
                 UsageLabel(obj.EffectiveUsage),
                 obj.ObjectType,
                 obj.TableName,
@@ -744,15 +936,37 @@ internal class MeasureKillerViewerForm : Form
                 obj.DirectUsage,
                 obj.UsedBy.Count,
                 obj.Reason);
-            var row = gridObjects.Rows[index];
             row.Tag = obj;
             row.DefaultCellStyle.BackColor = BackColorForUsage(obj.EffectiveUsage);
             row.DefaultCellStyle.ForeColor = Color.Black;
+            rows.Add(row);
         }
-        UpdateStatusCounts();
-        if (gridObjects.Rows.Count > 0 && gridObjects.CurrentCell == null)
-            gridObjects.CurrentCell = gridObjects.Rows[0].Cells[0];
+
+        suppressGridSelectionChanged = true;
+        gridObjects.SuspendLayout();
+        try
+        {
+            gridObjects.Rows.Clear();
+            if (rows.Count > 0) gridObjects.Rows.AddRange(rows.ToArray());
+            SelectGridRow(previousKey);
+            if (gridObjects.Rows.Count > 0 && gridObjects.CurrentCell == null)
+                gridObjects.CurrentCell = gridObjects.Rows[0].Cells[0];
+        }
+        finally
+        {
+            gridObjects.AutoSizeColumnsMode = previousAutoSize;
+            gridObjects.ResumeLayout();
+            suppressGridSelectionChanged = false;
+        }
+
+        UpdateStatusCounts(rows);
         UpdateSelectedObjectDetails();
+    }
+
+    private void ScheduleFilter()
+    {
+        filterTimer.Stop();
+        filterTimer.Start();
     }
 
     private static bool StatusMatches(LineageObject obj, string status)
@@ -760,12 +974,31 @@ internal class MeasureKillerViewerForm : Form
         return status == "All" || UsageLabel(obj.EffectiveUsage).Equals(status, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void UpdateStatusCounts()
+    private void UpdateStatusCounts(List<DataGridViewRow> visibleRows)
     {
-        foreach (var pair in statusCountLabels)
+        var counts = new Dictionary<EffectiveUsage, int>();
+        foreach (DataGridViewRow row in visibleRows)
         {
-            var count = lineageObjects.Count(o => o.EffectiveUsage == pair.Key);
-            pair.Value.Text = Convert.ToString(pair.Value.Tag) + ": " + count;
+            var obj = row.Tag as LineageObject;
+            if (obj == null) continue;
+            int count;
+            counts.TryGetValue(obj.EffectiveUsage, out count);
+            counts[obj.EffectiveUsage] = count + 1;
+        }
+        foreach (var pair in statusCountLabels)
+            pair.Value.Text = Convert.ToString(pair.Value.Tag) + ": " + (counts.ContainsKey(pair.Key) ? counts[pair.Key] : 0);
+    }
+
+    private void SelectGridRow(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return;
+        foreach (DataGridViewRow row in gridObjects.Rows)
+        {
+            var obj = row.Tag as LineageObject;
+            if (obj == null || !obj.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) continue;
+            row.Selected = true;
+            gridObjects.CurrentCell = row.Cells[0];
+            return;
         }
     }
 
@@ -804,10 +1037,88 @@ internal class MeasureKillerViewerForm : Form
     private void UpdateVisualPreview(LineageObject obj)
     {
         visualBoxes.Clear();
-        if (obj != null) CollectVisualBoxes(obj.SourceObject, visualBoxes);
-        visualPreview.Visible = visualBoxes.Count > 0;
-        visualPreviewRow.Height = visualBoxes.Count > 0 ? 190 : 0;
+        allPreviewBoxes.Clear();
+        visualPreviewPages.Clear();
+        visualPreviewPageIndex = 0;
+        visualPreviewTitle = "Visual coordinates";
+        if (obj != null) CollectPreviewVisualBoxes(obj, allPreviewBoxes);
+        RebuildPreviewPage();
+    }
+
+    private void CollectPreviewVisualBoxes(LineageObject selected, List<VisualBox> target)
+    {
+        if (selected == null) return;
+
+        if (selected.ObjectType.Equals("Visual", StringComparison.OrdinalIgnoreCase))
+        {
+            var selectedBox = TryCreateVisualBox(selected.SourceObject as Dictionary<string, object>, false);
+            var selectedPage = selectedBox == null ? selected.TableName : selectedBox.Page;
+            foreach (var box in allReportVisualBoxes)
+            {
+                if (!box.Page.Equals(selectedPage, StringComparison.OrdinalIgnoreCase)) continue;
+                target.Add(new VisualBox
+                {
+                    X = box.X,
+                    Y = box.Y,
+                    Width = box.Width,
+                    Height = box.Height,
+                    Title = box.Title,
+                    Page = box.Page,
+                    UsedAs = box.UsedAs,
+                    VisualId = box.VisualId,
+                    Highlight = selectedBox != null && box.VisualId.Equals(selectedBox.VisualId, StringComparison.OrdinalIgnoreCase)
+                });
+            }
+            return;
+        }
+
+        CollectVisualBoxes(selected.SourceObject, target, false);
+    }
+
+    private void RebuildPreviewPage()
+    {
+        visualBoxes.Clear();
+        visualPreviewPages.Clear();
+        visualPreviewPages.AddRange(allPreviewBoxes
+            .Select(b => string.IsNullOrWhiteSpace(b.Page) ? "(unknown page)" : b.Page)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p));
+
+        if (visualPreviewPages.Count == 0)
+        {
+            visualPreviewContainer.Visible = false;
+            visualPreview.Visible = false;
+            visualPreviewRow.Height = 0;
+            lblPreviewPage.Text = "";
+            visualPreview.Invalidate();
+            return;
+        }
+
+        if (visualPreviewPageIndex < 0) visualPreviewPageIndex = visualPreviewPages.Count - 1;
+        if (visualPreviewPageIndex >= visualPreviewPages.Count) visualPreviewPageIndex = 0;
+
+        var selectedPage = visualPreviewPages[visualPreviewPageIndex];
+        foreach (var box in allPreviewBoxes)
+        {
+            var page = string.IsNullOrWhiteSpace(box.Page) ? "(unknown page)" : box.Page;
+            if (page.Equals(selectedPage, StringComparison.OrdinalIgnoreCase)) visualBoxes.Add(box);
+        }
+
+        visualPreviewTitle = "Visual coordinates - " + selectedPage + " (" + (visualPreviewPageIndex + 1) + " of " + visualPreviewPages.Count + " pages)";
+        lblPreviewPage.Text = visualPreviewTitle;
+        btnPreviewPrevious.Enabled = visualPreviewPages.Count > 1;
+        btnPreviewNext.Enabled = visualPreviewPages.Count > 1;
+        visualPreviewContainer.Visible = true;
+        visualPreview.Visible = true;
+        visualPreviewRow.Height = 286;
         visualPreview.Invalidate();
+    }
+
+    private void ChangePreviewPage(int delta)
+    {
+        if (visualPreviewPages.Count <= 1) return;
+        visualPreviewPageIndex += delta;
+        RebuildPreviewPage();
     }
 
     private string BuildSummaryText(LineageObject obj)
@@ -833,6 +1144,13 @@ internal class MeasureKillerViewerForm : Form
         builder.AppendLine("------------");
         builder.AppendLine(obj.DirectUsage);
         builder.AppendLine("Used by: " + obj.UsedBy.Count);
+        if (obj.ObjectType.Equals("Visual", StringComparison.OrdinalIgnoreCase))
+        {
+            builder.AppendLine();
+            builder.AppendLine("Visual inputs");
+            builder.AppendLine("-------------");
+            builder.AppendLine(BuildVisualInputsText(obj));
+        }
         builder.AppendLine();
         builder.AppendLine("Lineage");
         builder.AppendLine("-------");
@@ -899,6 +1217,46 @@ internal class MeasureKillerViewerForm : Form
         var builder = new StringBuilder();
         if (obj.SourceObject != null) AppendValue(builder, obj.SourceObject, 0);
         return builder.ToString();
+    }
+
+    private string BuildVisualInputsText(LineageObject visual)
+    {
+        var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var producer in lineageObjects)
+        {
+            foreach (var edge in producer.UsedBy)
+            {
+                if (!edge.ToKey.Equals(visual.Key, StringComparison.OrdinalIgnoreCase)) continue;
+                var role = string.IsNullOrWhiteSpace(edge.Label) ? UsageLabel(edge.Kind) : edge.Label;
+                List<string> fields;
+                if (!groups.TryGetValue(role, out fields))
+                {
+                    fields = new List<string>();
+                    groups[role] = fields;
+                }
+                var field = producer.ObjectType + " / " + (string.IsNullOrWhiteSpace(producer.TableName) ? "" : producer.TableName + " / ") + producer.Name;
+                if (!fields.Contains(field)) fields.Add(field);
+            }
+        }
+
+        if (groups.Count == 0) return "No visual field inputs were found in the Measure Killer export.";
+
+        var order = new[] { "Rows", "Columns", "Values", "X-Axis", "Y-Axis", "Legend", "Category", "Tooltips", "Filters" };
+        var builder = new StringBuilder();
+        foreach (var role in order)
+            AppendVisualInputRole(builder, groups, role);
+        foreach (var role in groups.Keys.OrderBy(x => x))
+            if (!order.Contains(role, StringComparer.OrdinalIgnoreCase)) AppendVisualInputRole(builder, groups, role);
+        return builder.ToString().TrimEnd();
+    }
+
+    private static void AppendVisualInputRole(StringBuilder builder, Dictionary<string, List<string>> groups, string role)
+    {
+        List<string> fields;
+        if (!groups.TryGetValue(role, out fields)) return;
+        builder.AppendLine(role + ":");
+        foreach (var field in fields.OrderBy(x => x))
+            builder.AppendLine("  - " + field);
     }
 
     private void CopySelectedObjectName()
@@ -984,6 +1342,7 @@ internal class MeasureKillerViewerForm : Form
             case EffectiveUsage.CascadeCandidate: return "CASCADE";
             case EffectiveUsage.RelationshipOnly: return "REL";
             case EffectiveUsage.RelationshipIsland: return "ISLAND";
+            case EffectiveUsage.DuplicateVisual: return "DUP";
             case EffectiveUsage.Unused: return "UNUSED";
             default: return "REVIEW";
         }
@@ -997,6 +1356,7 @@ internal class MeasureKillerViewerForm : Form
             case EffectiveUsage.CascadeCandidate: return "Cascade candidate";
             case EffectiveUsage.RelationshipOnly: return "Relationship only";
             case EffectiveUsage.RelationshipIsland: return "Relationship island";
+            case EffectiveUsage.DuplicateVisual: return "Duplicate visual";
             case EffectiveUsage.Unused: return "Unused";
             default: return "Review";
         }
@@ -1030,6 +1390,7 @@ internal class MeasureKillerViewerForm : Form
             case EffectiveUsage.CascadeCandidate: return Color.LemonChiffon;
             case EffectiveUsage.RelationshipOnly: return Color.LightYellow;
             case EffectiveUsage.RelationshipIsland: return Color.AliceBlue;
+            case EffectiveUsage.DuplicateVisual: return Color.Lavender;
             case EffectiveUsage.Unused: return Color.MistyRose;
             default: return Color.Gainsboro;
         }
@@ -1576,7 +1937,8 @@ internal class MeasureKillerViewerForm : Form
 
     private void OpenJson()
     {
-        if (File.Exists(JsonPath)) System.Diagnostics.Process.Start("notepad.exe", JsonPath);
+        if (!File.Exists(currentJsonPath)) currentJsonPath = FindLatestJsonPath();
+        if (File.Exists(currentJsonPath)) System.Diagnostics.Process.Start("notepad.exe", currentJsonPath);
     }
 
     private void UpdateDetailsPanel()
@@ -1644,10 +2006,15 @@ internal class MeasureKillerViewerForm : Form
 
     private static void CollectVisualBoxes(object source, List<VisualBox> target)
     {
+        CollectVisualBoxes(source, target, false);
+    }
+
+    private static void CollectVisualBoxes(object source, List<VisualBox> target, bool highlight)
+    {
         var dict = source as Dictionary<string, object>;
         if (dict == null) return;
 
-        var direct = TryCreateVisualBox(dict);
+        var direct = TryCreateVisualBox(dict, highlight);
         if (direct != null)
         {
             target.Add(direct);
@@ -1656,12 +2023,12 @@ internal class MeasureKillerViewerForm : Form
 
         foreach (Dictionary<string, object> visual in Json.Array(dict, "visual_dependencies"))
         {
-            var box = TryCreateVisualBox(visual);
+            var box = TryCreateVisualBox(visual, highlight);
             if (box != null) target.Add(box);
         }
     }
 
-    private static VisualBox TryCreateVisualBox(Dictionary<string, object> dict)
+    private static VisualBox TryCreateVisualBox(Dictionary<string, object> dict, bool highlight)
     {
         var coordinates = Json.Str(dict, "coordinates");
         var hasVisualIdentity =
@@ -1691,7 +2058,9 @@ internal class MeasureKillerViewerForm : Form
             Height = height,
             Title = title,
             Page = Json.Str(dict, "page"),
-            UsedAs = Json.Str(dict, "used_as")
+            UsedAs = Json.Str(dict, "used_as"),
+            VisualId = Json.Str(dict, "visual_id"),
+            Highlight = highlight
         };
     }
 
@@ -1731,11 +2100,16 @@ internal class MeasureKillerViewerForm : Form
         e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         using (var textBrush = new SolidBrush(Color.DimGray))
         using (var pagePen = new Pen(Color.Silver))
-        using (var visualBrush = new SolidBrush(Color.FromArgb(80, Color.Plum)))
-        using (var visualPen = new Pen(Color.Indigo, 2f))
+        using (var visualBrush = new SolidBrush(Color.FromArgb(70, Color.LightSteelBlue)))
+        using (var selectedBrush = new SolidBrush(Color.FromArgb(130, Color.Plum)))
+        using (var visualPen = new Pen(Color.SteelBlue, 1f))
+        using (var selectedPen = new Pen(Color.Indigo, 3f))
         using (var font = new Font("Segoe UI", 8f))
         {
-            e.Graphics.DrawString("Visual coordinates", font, textBrush, new PointF(8, 7));
+            var pageName = visualBoxes.Count == 0 ? "" : visualBoxes[0].Page;
+            var title = visualPreviewTitle;
+            if (title == "Visual coordinates" && !string.IsNullOrWhiteSpace(pageName)) title += " - " + pageName;
+            e.Graphics.DrawString(title, font, textBrush, new PointF(8, 7));
             if (visualBoxes.Count == 0) return;
 
             var bounds = GetVisualBounds(visualBoxes);
@@ -1761,8 +2135,8 @@ internal class MeasureKillerViewerForm : Form
                     page.Top + (float)(box.Y - bounds.Y) * scale,
                     Math.Max(2f, (float)box.Width * scale),
                     Math.Max(2f, (float)box.Height * scale));
-                e.Graphics.FillRectangle(visualBrush, rect);
-                e.Graphics.DrawRectangle(visualPen, rect.X, rect.Y, rect.Width, rect.Height);
+                e.Graphics.FillRectangle(box.Highlight ? selectedBrush : visualBrush, rect);
+                e.Graphics.DrawRectangle(box.Highlight ? selectedPen : visualPen, rect.X, rect.Y, rect.Width, rect.Height);
                 var label = string.IsNullOrWhiteSpace(box.UsedAs) ? box.Title : box.Title + " / " + box.UsedAs;
                 if (!string.IsNullOrWhiteSpace(label))
                     e.Graphics.DrawString(label, font, Brushes.Black, new RectangleF(rect.Left + 3, rect.Top + 3, Math.Max(30, rect.Width - 6), Math.Max(14, rect.Height - 6)));
@@ -1772,10 +2146,10 @@ internal class MeasureKillerViewerForm : Form
 
     private static RectangleF GetVisualBounds(List<VisualBox> boxes)
     {
-        var left = double.MaxValue;
-        var top = double.MaxValue;
-        var right = double.MinValue;
-        var bottom = double.MinValue;
+        var left = 0.0;
+        var top = 0.0;
+        var right = 1280.0;
+        var bottom = 720.0;
 
         foreach (var box in boxes)
         {
@@ -1785,9 +2159,6 @@ internal class MeasureKillerViewerForm : Form
             bottom = Math.Max(bottom, box.Y + box.Height);
         }
 
-        if (left == double.MaxValue) return RectangleF.Empty;
-        if (left > 0) left = 0;
-        if (top > 0) top = 0;
         return new RectangleF((float)left, (float)top, (float)(right - left), (float)(bottom - top));
     }
 
@@ -1940,6 +2311,7 @@ internal class MeasureKillerViewerForm : Form
         var key = GetSelectionKey();
         if (string.Equals(key, lastSelectionKey, StringComparison.Ordinal)) return;
         lastSelectionKey = key;
+        InvalidateSelectedAffectedCache();
         UpdateSelectionLabel();
         if (chkSelectedObject.Checked)
         {
@@ -2024,6 +2396,23 @@ internal class MeasureKillerViewerForm : Form
                 AddAffectedKeys(key, result);
         }
         return result;
+    }
+
+    private HashSet<string> GetCachedSelectedAffectedKeys()
+    {
+        var key = GetSelectionKey();
+        if (string.Equals(key, cachedSelectedAffectKey, StringComparison.Ordinal))
+            return cachedSelectedAffectedKeys;
+
+        cachedSelectedAffectKey = key;
+        cachedSelectedAffectedKeys = GetSelectedAffectedKeys();
+        return cachedSelectedAffectedKeys;
+    }
+
+    private void InvalidateSelectedAffectedCache()
+    {
+        cachedSelectedAffectKey = "";
+        cachedSelectedAffectedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 
     private IEnumerable<string> ResolveSelectedLineageKeys(object selected)
@@ -2152,6 +2541,7 @@ internal enum EffectiveUsage
     CascadeCandidate,
     RelationshipOnly,
     RelationshipIsland,
+    DuplicateVisual,
     Unused,
     Review
 }
@@ -2262,6 +2652,8 @@ internal class VisualBox
     public string Title;
     public string Page;
     public string UsedAs;
+    public string VisualId;
+    public bool Highlight;
 }
 
 internal static class Json
