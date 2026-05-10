@@ -781,10 +781,7 @@
     <None Include="tabulareditor.pbitool.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Plugins\ModelJsonViewer\ModelJsonViewerPlugin.csx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Plugins\MeasureKillerViewer\MeasureKillerViewerPlugin.csx">
+    <None Include="Plugins\**\*.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Plugins\plugins.json">
