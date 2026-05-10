@@ -1,8 +1,18 @@
-# Minimal local agent configuration for this repository.
-# Keep delegation shallow so feature context stays easy to review.
+# .codex/config.toml
+
+# Default/root agent: planning, orchestration, review.
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+
+# Keep approvals interactive because this is a legacy Windows/.NET repo
+# with NuGet restore, build outputs, installer project, and possible local state.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
 
 [agents]
+max_threads = 6
 max_depth = 1
+job_max_runtime_seconds = 1800
 
 [mcp_servers.tabulareditor-cli]
 command = "uv"

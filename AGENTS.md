@@ -57,13 +57,68 @@ Every feature folder should be self-contained enough for a fresh Codex session t
 - Generated files such as `*.Designer.cs`, `*.resx` designer outputs, `*.generated.cs`, `obj/`, `bin/`, and ANTLR generated outputs unless the approved plan specifically requires regeneration.
 - Broad formatting-only edits across production code.
 
-CRITICAL: Pipe every non-interactive shell command through `distill` unless raw output is explicitly required.
 
-CRITICAL: Prompts to `distill` must be explicit about output format.
+
+
+
+CRITICAL: Use `distill` only when the desired answer is a compressed summary, classification, extraction, or short structured result.
+
+Prefer distill for running builds and tests.
+Do NOT pipe through `distill` when:
+- exact raw command output is required
+- the expected answer is larger than about 400 tokens
+- the task asks to list every match/path/line from a large command
+- the result must preserve every line, full paths, ordering, or formatting
+- debugging truncation, pagination, terminal output, or command I/O behavior
+
+For large `rg`, `find`, `git grep`, `ls`, `cat`:
+- prefer narrowing the command first
+- use `rg -l` when only filenames are needed
+- use `rg -n -m <N>` or more specific patterns
+- redirect large raw output to a temp file when needed
+- inspect chunks with `sed -n`, `head`, `tail`, or `wc -l`
+- only use `distill` after narrowing the output enough that the final answer is expected to fit under 400 tokens
+
+Good:
+  rg -n "foo" src > /tmp/rg.out
+  wc -l /tmp/rg.out
+  sed -n '1,120p' /tmp/rg.out
+
+Good:
+  rg -l "foo" src | distill "Return only the 10 most relevant file paths and why each matters."
+
+Bad:
+  rg -n "foo" src | distill "Return all matches exactly."
+
+# RTK - Rust Token Killer (Codex)
+
+**Usage**: Token-optimized CLI proxy for shell commands.
+
+## Rule
+
+Always prefix shell commands with `rtk`.
+
 Examples:
-- `bun test 2>&1 | distill "Did the tests pass? Return only: PASS or FAIL, followed by failing test names if any."`
-- `git diff 2>&1 | distill "What changed? Return only changed files and a one-line summary per file."`
 
-Skip `distill` only when:
-- exact raw output is required, or
-- command is interactive/TUI.
+```bash
+rtk rg
+rtk git status
+rtk npm run build
+rtk pytest -q
+```
+
+## Meta Commands
+
+```bash
+rtk gain            # Token savings analytics
+rtk gain --history  # Recent command savings history
+rtk proxy <cmd>     # Run raw command without filtering
+```
+
+## Verification
+
+```bash
+rtk --version
+rtk gain
+which rtk
+```
