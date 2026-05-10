@@ -257,6 +257,26 @@ namespace TabularEditor.UI.Actions
             Add(new Action((s, m) => Governance.AllowCreate(typeof(Function)) && s.Count == 1, (s, m) => s.ForEach(i => (i as IClonableObject).Clone(null, Preferences.Current.Copy_IncludeTranslations).Edit()), (s, m) => "Duplicate Function", true, Context.Function));
 
             // Batch Rename
+            Add(new Action((s, m) => Governance.AllowEditProperty(s.Direct, TOMWrapper.Properties.NAME) && s.DirectCount == 1 && s.Direct.First().CanEditName(), (s, m) =>
+            {
+                var obj = s.Direct.First();
+                var newName = PromptForRenameV2(obj);
+                if (newName == null || newName == obj.Name) return;
+
+                if (obj is IDaxObject) ForceRebuildDependencyTree(m);
+
+                var autoFixup = Handler.Settings.AutoFixup;
+                try
+                {
+                    Handler.Settings.AutoFixup = true;
+                    obj.Name = newName;
+                }
+                finally
+                {
+                    Handler.Settings.AutoFixup = autoFixup;
+                }
+            }, (s, m) => "Rename v2", true, Context.SingularObjects ^ Context.Model));
+
             Add(new Action((s, m) => Governance.AllowEditProperty(s.Direct, TOMWrapper.Properties.NAME) && s.DirectCount > 1, (s, m) =>
             {
                 var form = Dialogs.ReplaceForm.Singleton;
@@ -363,6 +383,85 @@ namespace TabularEditor.UI.Actions
         {
             return Governance.AllowEditProperty(s.Concat(s.Tables.SelectMany(t => t.GetChildren())), TOMWrapper.Properties.NAME)
                 && (s.Context == Context.Table || s.Direct.Any(i => i is Folder) || s.Context == Context.PartitionCollection);
+        }
+
+        private static string PromptForRenameV2(ITabularNamedObject obj)
+        {
+            using (var form = new Form())
+            using (var label = new Label())
+            using (var textBox = new TextBox())
+            using (var btnOK = new Button())
+            using (var btnCancel = new Button())
+            {
+                form.Text = "Rename v2";
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.MinimizeBox = false;
+                form.MaximizeBox = false;
+                form.ShowIcon = false;
+                form.ShowInTaskbar = false;
+                form.ClientSize = new System.Drawing.Size(360, 104);
+
+                label.AutoSize = true;
+                label.Text = "New name:";
+                label.Location = new System.Drawing.Point(12, 15);
+
+                textBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+                textBox.Location = new System.Drawing.Point(80, 12);
+                textBox.Size = new System.Drawing.Size(268, 20);
+                textBox.Text = obj.Name;
+                textBox.SelectAll();
+
+                btnOK.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+                btnOK.DialogResult = DialogResult.OK;
+                btnOK.Text = "OK";
+                btnOK.Location = new System.Drawing.Point(192, 69);
+                btnOK.Enabled = !string.IsNullOrWhiteSpace(textBox.Text);
+
+                btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+                btnCancel.DialogResult = DialogResult.Cancel;
+                btnCancel.Text = "Cancel";
+                btnCancel.Location = new System.Drawing.Point(273, 69);
+
+                textBox.TextChanged += (s, e) => btnOK.Enabled = !string.IsNullOrWhiteSpace(textBox.Text);
+
+                form.Controls.Add(label);
+                form.Controls.Add(textBox);
+                form.Controls.Add(btnOK);
+                form.Controls.Add(btnCancel);
+                form.AcceptButton = btnOK;
+                form.CancelButton = btnCancel;
+                form.Shown += (s, e) => textBox.Focus();
+
+                return form.ShowDialog() == DialogResult.OK ? textBox.Text : null;
+            }
+        }
+
+        private static void ForceRebuildDependencyTree(Model model)
+        {
+            foreach (var expressionObj in model.Tables.SelectMany(t => t.GetChildren()).Concat(model.Tables).OfType<IDaxDependantObject>())
+            {
+                FormulaFixup.BuildDependencyTree(expressionObj, true);
+            }
+            foreach (var calculationItem in model.CalculationGroups.SelectMany(cg => cg.CalculationItems))
+            {
+                FormulaFixup.BuildDependencyTree(calculationItem, true);
+            }
+            foreach (var partition in model.AllPartitions.Where(p => p.DataCoverageDefinition != null && !string.IsNullOrEmpty(p.DataCoverageDefinition.Expression)))
+            {
+                FormulaFixup.BuildDependencyTree(partition, true);
+            }
+            foreach (var function in model.Functions.Where(f => !string.IsNullOrEmpty(f.Expression)))
+            {
+                FormulaFixup.BuildDependencyTree(function, true);
+            }
+            foreach (var role in model.Roles)
+            {
+                foreach (var tablePermission in role.TablePermissions)
+                {
+                    FormulaFixup.BuildDependencyTree(tablePermission, true);
+                }
+            }
         }
 
         private void ImportTmdl(UITreeSelection s, Model m)

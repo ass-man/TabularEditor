@@ -100,7 +100,7 @@ Always prefix shell commands with `rtk`.
 
 Examples:
 
-```bash
+```powershell
 rtk rg
 rtk git status
 rtk npm run build
@@ -109,7 +109,7 @@ rtk pytest -q
 
 ## Meta Commands
 
-```bash
+```powershell
 rtk gain            # Token savings analytics
 rtk gain --history  # Recent command savings history
 rtk proxy <cmd>     # Run raw command without filtering
@@ -117,7 +117,7 @@ rtk proxy <cmd>     # Run raw command without filtering
 
 ## Verification
 
-```bash
+```powershell
 rtk --version
 rtk gain
 which rtk

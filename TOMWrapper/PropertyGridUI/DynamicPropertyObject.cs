@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing.Design;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -144,6 +145,19 @@ namespace TabularEditor.PropertyGridUI
         public override bool ShouldSerializeValue(object component)
         {
             return _descriptor.ShouldSerializeValue(component);
+        }
+
+        public override object GetEditor(Type editorBaseType)
+        {
+            var existingEditor = _descriptor.GetEditor(editorBaseType);
+            if (existingEditor != null) return existingEditor;
+
+            if (editorBaseType == typeof(UITypeEditor) && CustomEditors.HasEditorFor(Name))
+            {
+                return new CustomDialogEditor();
+            }
+
+            return null;
         }
     }
 

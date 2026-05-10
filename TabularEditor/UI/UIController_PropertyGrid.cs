@@ -22,6 +22,8 @@ namespace TabularEditor.UI
             CustomEditors.RegisterEditor(nameof(TimeUnitColumnAssociation.PrimaryColumn), new ColumnSelectDialog(multiSelect: false, allowNoSelection: false));
             CustomEditors.RegisterEditor(nameof(TimeUnitColumnAssociation.AssociatedColumns), new ColumnSelectDialog(multiSelect: true, allowNoSelection: true));
             CustomEditors.RegisterEditor(nameof(TimeRelatedColumnGroup.Columns), new ColumnSelectDialog(multiSelect: true, allowNoSelection: false));
+            CustomEditors.RegisterEditor(nameof(SingleColumnRelationship.FromColumn), new RelationshipColumnSelectDialog());
+            CustomEditors.RegisterEditor(nameof(SingleColumnRelationship.ToColumn), new RelationshipColumnSelectDialog());
         }
 
         public void PropertyGrid_UpdateFromSelection()
